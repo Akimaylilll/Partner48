@@ -1,6 +1,9 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
+import { Listeners } from './listeners';
+import NodeMediaServer from 'node-media-server';
+import log  from 'electron-log';
 
 // The built directory structure
 //
@@ -62,6 +65,25 @@ async function createWindow() {
     win.loadFile(indexHtml)
   }
 
+  //测试
+  new Listeners(win);
+  const config = {
+      rtmp: {
+          port: 1935,
+          chunk_size: 60000,
+          gop_cache: true,
+          ping: 60,
+          ping_timeout: 30
+      },
+      http: {
+          port: 8000,
+          allow_origin: '*',
+      }
+  };
+
+  var nms = new NodeMediaServer(config)
+  nms.run();
+  log.info('media-server is successing');
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
