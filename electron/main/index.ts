@@ -1,9 +1,9 @@
 import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 import { Listeners } from './listeners';
-import NodeMediaServer from 'node-media-server';
 import log  from 'electron-log';
+const { Worker } = require('worker_threads');
 
 // The built directory structure
 //
@@ -54,6 +54,7 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
       contextIsolation: false,
+      nodeIntegrationInWorker: true
     },
   })
 
@@ -63,28 +64,15 @@ async function createWindow() {
     win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
-    win.webContents.openDevTools()
   }
 
   //测试
   new Listeners(win);
-  const config = {
-      rtmp: {
-          port: 1935,
-          chunk_size: 60000,
-          gop_cache: true,
-          ping: 60,
-          ping_timeout: 30
-      },
-      http: {
-          port: 8088,
-          allow_origin: '*',
-      }
-  };
-
-  var nms = new NodeMediaServer(config)
-  nms.run();
-  log.info('media-server is successing');
+  const tsFile = resolve(join(__dirname, `mediaServer.js`)).replace(/\\/g, '/');
+  const worker = new Worker(tsFile, {
+    // workerData: 1000,
+    // eval: true,
+  });
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
