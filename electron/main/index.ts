@@ -63,6 +63,7 @@ async function createWindow() {
     win.webContents.openDevTools()
   } else {
     win.loadFile(indexHtml)
+    win.webContents.openDevTools()
   }
 
   //测试
@@ -76,7 +77,7 @@ async function createWindow() {
           ping_timeout: 30
       },
       http: {
-          port: 8000,
+          port: 8088,
           allow_origin: '*',
       }
   };

@@ -70,10 +70,8 @@ function livePlaer (src: string) {
 }
 
 function initVideoSourc(source: string) {
-  //`https://cychengyuan-vod.48.cn/71500014/20230226/cy/836417097073233920-siik6qqge4q6svvzrklq.m3u8`
-  //`http://localhost:8000/live/${videoId.value}.flv`
   const src = isLive ?
-    `http://localhost:8000/live/${videoId.value}.flv` :
+    `http://localhost:8088/live/${videoId.value}.flv` :
       source;
   const dp: DPlayer = isLive ? livePlaer(src) : recordPlaer(src);
   dp.fullScreen.request('web');
