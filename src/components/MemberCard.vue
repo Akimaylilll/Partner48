@@ -94,7 +94,7 @@ const handleScroll = async (e: any) =>{
 
 <template>
   <div v-if="showTopLoading" class="top-mask">
-    <img src="loading.gif" style="width: 20px;">
+    <img src="../img/loading.gif" style="width: 20px;">
   </div>
   <div @scroll.prevent="handleScroll" style="width:100%; height: 100%;">
     <div style="width: 100%">直播</div>
@@ -131,7 +131,7 @@ const handleScroll = async (e: any) =>{
     </div>
   </div>
   <div v-if="showBottomLoading" >
-    <img src="loading.gif" style="width: 20px;">
+    <img src="../img/loading.gif" style="width: 20px;">
   </div>
 </template>
 
@@ -147,7 +147,7 @@ const handleScroll = async (e: any) =>{
   width: 100%;
 }
  .grid-item {
-    width: 49%;
+    width: 46%;
     padding-bottom: 10px;
     cursor: pointer;
     border-radius: 10px;
