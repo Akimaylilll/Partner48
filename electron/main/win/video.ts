@@ -83,16 +83,16 @@ export class VideoWin {
     const command = ffmpeg(source)
       .inputOptions('-re')
       .on('start', function (commandLine) {
-        console.log('[' + new Date() + '] Vedio is Pushing !');
-        console.log('commandLine: ' + commandLine);
+        log.info('[' + new Date() + '] Vedio is Pushing !');
+        log.info('commandLine: ' + commandLine);
       })
       .on('error', function (err, stdout, stderr) {
-        console.log('error: ' + err.message);
-        console.log('stdout: ' + stdout);
-        console.log('stderr: ' + stderr);
+        log.error('error: ' + err.message);
+        log.error('stdout: ' + stdout);
+        log.error('stderr: ' + stderr);
       })
       .on('end', function () {
-        console.log('[' + new Date() + '] Vedio Pushing is Finished !');
+        log.info('[' + new Date() + '] Vedio Pushing is Finished !');
       })
       .addOptions([
         '-c:v libx264',
