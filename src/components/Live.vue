@@ -4,13 +4,15 @@ import flvjs from 'flv.js'
 import { ref, onMounted, nextTick } from 'vue'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
-import DPlayer from 'dplayer'
+import DPlayer, { DPlayerEvents } from 'dplayer'
 
 defineProps<{ msg: string }>()
 
 const count = ref(0)
 const videoId = ref('')
 let isLive = true;
+let isPause = true;
+let flvPlayer: flvjs.Player | null = null;
 ipcRenderer.once('open-video-id', function (event, arg, userName, source) { // 接收到Main进程返回的消息
   videoId.value = arg;
   document.title = userName;
@@ -42,6 +44,20 @@ function recordPlaer (src: string) {
   return dp;
 }
 
+function flvPlayerInit (src: string, video: any) {
+  flvPlayer = flvjs.createPlayer({
+    type: 'flv',
+    url: src
+  }, {
+    enableWorker: true,
+    enableStashBuffer: false,
+    autoCleanupSourceBuffer: true,
+    stashInitialSize: 128,
+  })
+  flvPlayer.attachMediaElement(video)
+  flvPlayer.load()
+}
+
 function livePlaer (src: string) {
   const dp: DPlayer = new DPlayer({
     live: true,
@@ -52,15 +68,19 @@ function livePlaer (src: string) {
       type: 'customFlv',
       customType: {
         customFlv: function(video: any, player: any) {
-          const flvPlayer = flvjs.createPlayer({
-            type: 'flv',
-            url: src
-          })
-          flvPlayer.attachMediaElement(video)
-          flvPlayer.load()
+          flvPlayerInit(src, video);
           // flvPlayer.play()
-          flvPlayer.on('error', e => {
+          flvPlayer?.on('error', e => {
             // 这里是视频加载失败
+            console.log(e)
+            if (flvPlayer) {
+              flvPlayer.pause();
+              flvPlayer.unload();
+              flvPlayer.detachMediaElement();
+              flvPlayer.destroy();
+              flvPlayer = null;
+              flvPlayerInit(src, video)
+            }
           })
         }
       }
@@ -74,6 +94,12 @@ function initVideoSourc(source: string) {
     `http://localhost:8088/live/${videoId.value}.flv` :
       source;
   const dp: DPlayer = isLive ? livePlaer(src) : recordPlaer(src);
+  dp.on('pause' as DPlayerEvents, function() {
+    isPause = false;
+  });
+  dp.on('play' as DPlayerEvents, function() {
+    isPause = true;
+  });
   dp.fullScreen.request('web');
   dp.play();
 }
@@ -81,6 +107,15 @@ function initVideoSourc(source: string) {
 onMounted(async() => {
   nextTick(() => {
     // initVideoSourc();
+    setInterval(() => {
+      if (flvPlayer?.buffered.length && isPause) {
+        let end = flvPlayer.buffered.end(0);//获取当前buffered值
+        let diff = end - flvPlayer.currentTime;//获取buffered与currentTime的差值
+        if (diff >= 0.5) {//如果差值大于等于0.5 手动跳帧 这里可根据自身需求来定
+          flvPlayer.currentTime = flvPlayer.buffered.end(0) - 1.5;//手动跳帧
+        }
+      }
+    }, 2000); //2000毫秒执行一次
   })
 });
 
