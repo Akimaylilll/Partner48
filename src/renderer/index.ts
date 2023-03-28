@@ -29,9 +29,14 @@ const getVideoId = () => {
   });
 }
 
+const closeLiveWin = (liveId: string) => {
+  ipcRenderer.send('close-live-win-' + liveId, '0');
+}
+
 export {
   testSend,
   getLiveList,
   openLiveById,
-  getVideoId
+  getVideoId,
+  closeLiveWin
 }

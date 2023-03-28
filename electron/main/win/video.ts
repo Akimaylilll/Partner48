@@ -14,6 +14,7 @@ export class VideoWin {
   private height: number = 620;
   private width: number = 320;
   private worker: UtilityProcess  = null;
+  public videoWin: BrowserWindow = null;
 
   public constructor(parentWin: BrowserWindow, liveId: string) {
     this.liveId = liveId;
@@ -36,7 +37,7 @@ export class VideoWin {
 
   public open() {
     Menu.setApplicationMenu(null);
-    const videoWin = new BrowserWindow({
+    this.videoWin = new BrowserWindow({
       useContentSize: true,
       height: this.height,
       width: this.width,
@@ -50,24 +51,24 @@ export class VideoWin {
       }
     });
 
-    videoWin.on('close', (event) => {
+    this.videoWin.on('close', (event) => {
       this.worker && this.worker.kill()
     });
 
     const url = process.env.VITE_DEV_SERVER_URL;
     if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
-      videoWin.loadURL(url + '#/live');
+      this.videoWin.loadURL(url + '#/live');
       // Open devTool if the app is not packaged
-      videoWin.webContents.openDevTools();
+      this.videoWin.webContents.openDevTools();
     } else {
-      videoWin.loadFile(join(process.env.DIST, 'index.html'), {
+      this.videoWin.loadFile(join(process.env.DIST, 'index.html'), {
         hash: 'live'
       });
       // videoWin.webContents.openDevTools()
     }
     setTimeout(() => {
-      videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source);
-      videoWin.show();
+      this.videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source);
+      this.videoWin.show();
     }, 1000);
   }
 

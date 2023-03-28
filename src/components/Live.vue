@@ -5,6 +5,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import DPlayer, { DPlayerEvents } from 'dplayer'
+import { closeLiveWin } from '../renderer/index'
 
 defineProps<{ msg: string }>()
 
@@ -99,6 +100,10 @@ function initVideoSourc(source: string) {
   });
   dp.on('play' as DPlayerEvents, function() {
     isPause = true;
+  });
+  dp.on('ended' as DPlayerEvents, function() {
+    alert('直播结束')
+    closeLiveWin(videoId.value);
   });
   dp.fullScreen.request('web');
   dp.play();

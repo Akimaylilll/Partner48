@@ -22,6 +22,9 @@ export class Listeners {
     ipcMain.on('open-live-query', (event, ...args) => {
       // const win = VideoWin(args.parentId, args.source, args.liveId)
       const video = new VideoWin(win, args[0]);
+      ipcMain.once('close-live-win-' + args[0], (event, ...args) => {
+        video.videoWin.close()
+      });
       event.reply('open-live-reply', video.source);
     });
   }

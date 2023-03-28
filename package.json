@@ -19,7 +19,8 @@
     }
   },
   "scripts": {
-    "dev": "chcp 65001 && vite",
+    "dev": "vite",
+    "dev:win": "chcp 65001 && vite",
     "build": "vue-tsc --noEmit && vite build && electron-builder",
     "preview": "vite preview"
   },
