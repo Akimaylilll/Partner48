@@ -102,6 +102,7 @@ const handleScroll = async (e: any) =>{
       <div v-masonry-tile class="grid-item" v-for="(o,index) in liveList" :key="index">
         <el-card @click="openLive(o.liveId)">
           <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
+          <span style="position: absolute;bottom: 94px;right: 22px;background-color: orchid;padding: 5px;border-radius: 5px;">{{o.liveType === 1 ? '视频' : '电台'}}</span>
           <div style="padding: 14px;">
             <span>{{o.title}}</span>
             <div class="bottom clearfix">
