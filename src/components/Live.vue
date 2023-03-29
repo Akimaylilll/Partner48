@@ -134,4 +134,7 @@ onMounted(async() => {
 .read-the-docs {
   color: #888;
 }
+/deep/.dplayer-menu-show {
+  display: none !important;
+}
 </style>
