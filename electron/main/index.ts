@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
 import { release } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Listeners } from './listeners';
@@ -31,7 +31,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
-
+Menu.setApplicationMenu(null);
 // Remove electron security warnings
 // This warning only shows in development mode
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
