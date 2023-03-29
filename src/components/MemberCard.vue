@@ -102,7 +102,7 @@ const handleScroll = async (e: any) =>{
       <div v-masonry-tile class="grid-item" v-for="(o,index) in liveList" :key="index">
         <el-card @click="openLive(o.liveId)">
           <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
-          <span style="position: absolute;bottom: 94px;right: 22px;background-color: orchid;padding: 5px;border-radius: 5px;">{{o.liveType === 1 ? '视频' : '电台'}}</span>
+          <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 1 ? '视频' : '电台'}}</span>
           <div style="padding: 14px;">
             <span>{{o.title}}</span>
             <div class="bottom clearfix">
@@ -119,6 +119,7 @@ const handleScroll = async (e: any) =>{
       <div v-masonry-tile gutter="10" itemSelector=".grid-item" :fitWidth= "true" class="grid-item" v-for="(o ,index) in replayList" :key="index">
         <el-card @click="openLive(o.liveId)">
           <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
+          <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 1 ? '视频' : '电台'}}</span>
           <div style="padding: 14px;">
             <span>{{o.title}}</span>
             <div class="bottom clearfix">
@@ -166,5 +167,12 @@ const handleScroll = async (e: any) =>{
     width: 100%;
     height: 100%;
     z-index: 1
+  }
+  .liveType {
+    position: absolute;
+    bottom: 94px;
+    right: 22px;
+    padding: 1px 5px 1px 5px;
+    border-radius: 5px;
   }
 </style>
