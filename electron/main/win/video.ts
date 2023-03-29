@@ -1,4 +1,4 @@
-import { BrowserWindow, Menu, UtilityProcess } from 'electron';
+import { BrowserWindow, UtilityProcess } from 'electron';
 import { Pocket } from '../pocket/pocket';
 import { join } from 'node:path';
 import ffmpeg from 'fluent-ffmpeg';
@@ -36,7 +36,6 @@ export class VideoWin {
   }
 
   public open() {
-    Menu.setApplicationMenu(null);
     this.videoWin = new BrowserWindow({
       useContentSize: true,
       height: this.height,
