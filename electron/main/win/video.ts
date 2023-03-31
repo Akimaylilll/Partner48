@@ -25,7 +25,7 @@ export class VideoWin {
       this.liveUser = content.user.userName;
       if(this.source.indexOf('.m3u8') === -1){
         try{
-          this.ffmpegServer(this.source, this.liveId.toString(), "localhost", "1935");
+          this.ffmpegServer(this.source, this.liveId.toString(), "localhost", "8935");
         }
         catch(e){
           log.error(e);

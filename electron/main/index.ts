@@ -3,6 +3,7 @@ import { release } from 'node:os'
 import { join, resolve } from 'node:path'
 import { Listeners } from './listeners';
 import log  from 'electron-log';
+import { Tools } from './utils';
 const { Worker } = require('worker_threads');
 
 // The built directory structure
@@ -32,6 +33,19 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 Menu.setApplicationMenu(null);
+const testPorts = async () =>{
+  try {
+    const info:any = await Tools.findPort('8936');
+    const result = await Tools.killPort(info.pId);
+    console.log(result)
+  } catch (e) { }
+  try {
+    const info:any = await Tools.findPort('8935');
+    const result = await Tools.killPort(info.pId);
+    console.log(result)
+  } catch (e) { }
+}
+testPorts();
 // Remove electron security warnings
 // This warning only shows in development mode
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
