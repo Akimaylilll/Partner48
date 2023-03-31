@@ -92,7 +92,7 @@ function livePlaer (src: string) {
 
 function initVideoSourc(source: string) {
   const src = isLive ?
-    `http://localhost:8088/live/${videoId.value}.flv` :
+    `http://localhost:8936/live/${videoId.value}.flv` :
       source;
   const dp: DPlayer = isLive ? livePlaer(src) : recordPlaer(src);
   dp.on('pause' as DPlayerEvents, function() {
