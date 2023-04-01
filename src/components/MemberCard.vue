@@ -180,16 +180,7 @@ const reSetReplayDict = (list: Array<any>) => {
   .grid-item:hover {
     border: #7272cc 2px solid;
   }
-  .top-mask {
-    background-color: #ccc;
-    opacity: 0.3;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1
-  }
+
   .liveType {
     position: absolute;
     bottom: 96px;
