@@ -1,10 +1,9 @@
-import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { release } from 'node:os'
-import { join, resolve } from 'node:path'
-import { Listeners } from './listeners';
+import { join } from 'node:path'
+import { MainWin } from './win/MainWin';
 import log  from 'electron-log';
-import { Tools } from './utils';
-const { Worker } = require('worker_threads');
+import { MainBrowserWin } from "./types/index";
 
 // The built directory structure
 //
@@ -32,76 +31,26 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
-Menu.setApplicationMenu(null);
-const testPorts = async () =>{
-  try {
-    const info:any = await Tools.findPort('8936');
-    const result = await Tools.killPort(info.pId);
-    console.log(result)
-  } catch (e) { }
-  try {
-    const info:any = await Tools.findPort('8935');
-    const result = await Tools.killPort(info.pId);
-    console.log(result)
-  } catch (e) { }
-}
-testPorts();
+
 // Remove electron security warnings
 // This warning only shows in development mode
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
-let win: BrowserWindow | null = null
+let win: MainBrowserWin | null = null
 // Here, you can also use other preload
-const preload = join(__dirname, '../preload/index.js')
-const url = process.env.VITE_DEV_SERVER_URL
-const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
-  win = new BrowserWindow({
-    title: 'Main window',
-    icon: join(process.env.PUBLIC, 'favicon.ico'),
-    webPreferences: {
-      preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      nodeIntegration: true,
-      contextIsolation: false,
-      nodeIntegrationInWorker: true
-    },
-  })
-
-  if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
-    win.loadURL(url)
-    // Open devTool if the app is not packaged
-    win.webContents.openDevTools()
-  } else {
-    win.loadFile(indexHtml)
-  }
-
-  //测试
-  new Listeners(win);
-  const tsFile = resolve(join(__dirname, `mediaServer.js`)).replace(/\\/g, '/');
-  const worker = new Worker(tsFile, {
-    // workerData: 1000,
-    // eval: true,
-  });
-  // Test actively push message to the Electron-Renderer
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
-  })
-
-  // Make all links open with the browser, not with the application
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:')) shell.openExternal(url)
-    return { action: 'deny' }
-  })
+  const mainWin = new MainWin();
+  win = mainWin.getWin();
 }
 
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
+  win.childProcessArray.reverse().forEach(item => {
+    item.kill();
+  });
   win = null
   if (process.platform !== 'darwin') app.quit()
 })
@@ -114,28 +63,18 @@ app.on('second-instance', () => {
   }
 })
 
-app.on('activate', () => {
-  const allWindows = BrowserWindow.getAllWindows()
-  if (allWindows.length) {
-    allWindows[0].focus()
-  } else {
-    createWindow()
-  }
-})
+app.on('gpu-process-crashed', (event, kill) => {
+  log.warn('app:gpu-process-crashed', event, kill);
+});
 
-// New window example arg: new windows url
-ipcMain.handle('open-win', (_, arg) => {
-  const childWindow = new BrowserWindow({
-    webPreferences: {
-      preload,
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
+app.on('renderer-process-crashed', (event, webContents, kill) => {
+  log.warn('app:renderer-process-crashed', event, webContents, kill);
+});
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${url}#${arg}`)
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg })
-  }
-})
+app.on('render-process-gone', (event, webContents, details) => {
+  log.warn('app:render-process-gone', event, webContents, details);
+});
+
+app.on('child-process-gone', (event, details) => {
+  log.warn('app:child-process-gone', event, details);
+});
