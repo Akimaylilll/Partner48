@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import flvjs from 'flv.js'
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import DPlayer, { DPlayerEvents } from 'dplayer'
@@ -13,9 +13,11 @@ const count = ref(0)
 const videoId = ref('')
 let isLive = true;
 let isPause = true;
+let liveType = ref(1);
 let flvPlayer: flvjs.Player | null = null;
-ipcRenderer.once('open-video-id', function (event, arg, userName, source) { // 接收到Main进程返回的消息
+ipcRenderer.once('open-video-id', function (event, arg, userName, source, type) { // 接收到Main进程返回的消息
   videoId.value = arg;
+  liveType.value = type;
   document.title = userName;
   if(source.indexOf('.m3u8') > -1){
     isLive = false;
@@ -123,11 +125,16 @@ onMounted(async() => {
     }, 2000); //2000毫秒执行一次
   })
 });
-
+const clcStyle = computed(() => {
+  const style: any = {};
+  style["width"] = "100% !important";
+  style["--video-display"] = liveType.value === 1 ? "block" : "none";
+  return style;
+})
 </script>
 
 <template>
-  <div id="myVideo" style="width: 100%;"></div>
+  <div id="myVideo" :style="clcStyle"></div>
 </template>
 
 <style scoped>
@@ -136,5 +143,8 @@ onMounted(async() => {
 }
 :v-deep .dplayer-menu-show {
   display: none !important;
+}
+#myVideo >>> .dplayer-video-current {
+  display: var(--video-display) !important;
 }
 </style>
