@@ -8,7 +8,7 @@ import ffprobePath from 'ffprobe-static'
 import log  from 'electron-log';
 export class VideoWin {
   public source: string = null;
-  private liveId: string = null;
+  public liveId: string = null;
   private liveUser: string = null;
   private parentWin: BrowserWindow = null;
   private height: number = 620;
