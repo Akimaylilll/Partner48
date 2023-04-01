@@ -82,8 +82,14 @@ async function createWindow() {
   new Listeners(win);
   const tsFile = resolve(join(__dirname, `mediaServer.js`)).replace(/\\/g, '/');
   const worker = new Worker(tsFile, {
-    // workerData: 1000,
-    // eval: true,
+    stdout: true,
+    stderr: true
+  });
+  worker.stdout.on('data', (result) => {
+    log.info(Buffer.from(result).toString());
+  });
+  worker.stderr.on('data', (result) => {
+    log.error(Buffer.from(result).toString());
   });
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
