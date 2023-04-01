@@ -9,6 +9,7 @@ import log  from 'electron-log';
 export class VideoWin {
   public source: string = null;
   public liveId: string = null;
+  private liveType: number = 1;
   private liveUser: string = null;
   private parentWin: BrowserWindow = null;
   private height: number = 620;
@@ -23,6 +24,7 @@ export class VideoWin {
     pocket.getOneLiveById(liveId).then((content) => {
       this.source = content.playStreamPath;
       this.liveUser = content.user.userName;
+      this.liveType = content.liveType;
       if(this.source.indexOf('.m3u8') === -1){
         try{
           this.ffmpegServer(this.source, this.liveId.toString(), "localhost", "8935");
@@ -66,7 +68,7 @@ export class VideoWin {
       // videoWin.webContents.openDevTools()
     }
     setTimeout(() => {
-      this.videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source);
+      this.videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source, this.liveType);
       this.videoWin.show();
     }, 1000);
   }
