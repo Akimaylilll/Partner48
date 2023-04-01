@@ -30,7 +30,7 @@ const getVideoId = () => {
 }
 
 const closeLiveWin = (liveId: string) => {
-  ipcRenderer.send('close-live-win-' + liveId, '0');
+  ipcRenderer.send('close-live-win', liveId);
 }
 
 export {

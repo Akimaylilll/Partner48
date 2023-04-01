@@ -1,8 +1,10 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { Pocket } from './pocket/pocket';
 import { VideoWin } from './win/video';
+import log  from 'electron-log';
 
 export class Listeners {
+  private videoWinList: Array<VideoWin> = [];
   // private win: BrowserWindow | null = null
   constructor(win: BrowserWindow) {
     // ipcMain.on('lives-list', (event, ...args) => {
@@ -20,12 +22,19 @@ export class Listeners {
     });
 
     ipcMain.on('open-live-query', (event, ...args) => {
-      // const win = VideoWin(args.parentId, args.source, args.liveId)
       const video = new VideoWin(win, args[0]);
-      ipcMain.once('close-live-win-' + args[0], (event, ...args) => {
-        video.videoWin.close()
-      });
+      this.videoWinList.push(video);
+      console.log(this.videoWinList);
       event.reply('open-live-reply', video.source);
+    });
+    ipcMain.on('close-live-win', (event, ...args) => {
+      this.videoWinList.map((item, index) => {
+        if(item.liveId == args[0]) {
+          log.info("close the liveId:" + args[0]);
+          item.videoWin.close();
+          this.videoWinList.splice(index, 1);
+        }
+      })
     });
   }
 }
