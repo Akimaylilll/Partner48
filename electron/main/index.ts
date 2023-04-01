@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path'
 import { Listeners } from './listeners';
 import log  from 'electron-log';
 import { Tools } from './utils';
-const { Worker } = require('worker_threads');
+import { Worker } from 'worker_threads';
 
 // The built directory structure
 //
