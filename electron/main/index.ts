@@ -36,13 +36,11 @@ Menu.setApplicationMenu(null);
 const testPorts = async () =>{
   try {
     const info:any = await Tools.findPort('8936');
-    const result = await Tools.killPort(info.pId);
-    console.log(result)
+    await Tools.killPort(info.pId);
   } catch (e) { }
   try {
     const info:any = await Tools.findPort('8935');
-    const result = await Tools.killPort(info.pId);
-    console.log(result)
+    await Tools.killPort(info.pId);
   } catch (e) { }
 }
 testPorts();
