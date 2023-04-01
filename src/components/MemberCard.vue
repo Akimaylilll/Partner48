@@ -3,9 +3,9 @@ import { ref, onMounted, watch } from 'vue'
 import { getLiveList, openLiveById } from '../renderer/index'
 defineProps<{ msg: string }>()
 
-let count = ref(0)
 let liveList: any = ref([]);
 let replayList: any = ref([]);
+let replayDict: any = ref({});
 let show = ref(false);
 let recordShow = ref(false);
 let showTopLoading = ref(true);
@@ -23,19 +23,23 @@ const initLive = () => {
   showTopLoading.value = true;
   liveList.value = [];
   replayList.value = [];
+  replayDict.value = {};
   next = "0";
   getLiveList(true, next).then(value => {
     setTimeout(() => {
       showTopLoading.value = false;
-    }, 500);
+    }, 1000);
     liveList.value = (value as any).liveList;
     if(replayList.value.length > 0){
-      next = (liveList.value.at(-1) as any).liveId;
+      next = (liveList.value?.at(-1) as any).liveId || next;
     } else {
-      getLiveList(false, next).then( list => {
-        replayList.value = (list as any).liveList;
-        next = (replayList.value.at(-1) as any).liveId;
-      });
+      setTimeout(() => {
+        getLiveList(false, next).then( list => {
+          replayList.value = (list as any).liveList;
+          next = (replayList.value?.at(-1) as any)?.liveId || next;
+          reSetReplayDict(replayList.value);
+        });
+      }, 800);
     }
   });
 }
@@ -70,9 +74,9 @@ const handleScroll = async (e: any) =>{
   if(_isLive){
     const result = await getLiveList(_isLive, next) as any;
     const newList = result.liveList;
-    if(newList.length > 0 && newList.at(-1).liveId !== (liveList.value.at(-1) as any).liveId){
+    if(newList.length > 0 && newList.at(-1).liveId !== (liveList.value.at(-1) as any)?.liveId){
       liveList.value = [...liveList.value,...newList as []]
-      next = (liveList.value.at(-1) as any).liveId;
+      next = (liveList.value?.at(-1) as any).liveId || next;
     } else {
       _isLive = false;
       recordShow.value = true;
@@ -82,12 +86,27 @@ const handleScroll = async (e: any) =>{
   if(! _isLive) {
     const result = await getLiveList(_isLive, next) as any;
     const newList = result.liveList;
-    replayList.value = [...replayList.value, ...newList as []];
-    next = (replayList.value.at(-1) as any).liveId;
+    replayList.value = Array.from(new Set([...replayList.value, ...newList as []]));
+    next = (replayList.value?.at(-1) as any)?.liveId || next;
+    reSetReplayDict(replayList.value);
   }
   setTimeout(() => {
     showBottomLoading.value = false;
   }, 2000);
+};
+
+const reSetReplayDict = (list: Array<any>) => {
+  replayDict.value = {};
+  list.map((item: any) => {
+    const date = new Date(Number(item?.ctime));
+    const dateStr = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
+    if (replayDict.value[dateStr]) {
+      replayDict.value[dateStr].push(item);
+    } else {
+      replayDict.value[dateStr] = [];
+      replayDict.value[dateStr].push(item);
+    }
+  })
 };
 
 </script>
@@ -115,20 +134,23 @@ const handleScroll = async (e: any) =>{
       </div>
     </div>
     <div style="width: 100%">重播</div>
-    <div v-masonry :v-if="recordShow" class="grid">
-      <div v-masonry-tile gutter="10" itemSelector=".grid-item" :fitWidth= "true" class="grid-item" v-for="(o ,index) in replayList" :key="index">
-        <el-card @click="openLive(o.liveId)">
-          <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
-          <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 1 ? '视频' : '电台'}}</span>
-          <div style="padding: 14px;">
-            <span>{{o.title}}</span>
-            <div class="bottom clearfix">
-              <img :src="`https://source.48.cn${o.userInfo.teamLogo}`" class="logo">
-              <time class="time"> {{ o.userInfo.nickname }} </time>
-              <!-- <el-button type="text" class="button">操作按钮</el-button> -->
+    <div v-for="dateKey,dateIndex in Object.keys(replayDict)"  :key="dateIndex">
+      <div style="width: 100%">{{ dateKey }}</div>
+      <div v-masonry :v-if="recordShow" class="grid">
+        <div v-masonry-tile gutter="10" itemSelector=".grid-item" :fitWidth= "true" class="grid-item" v-for="(o ,index) in replayDict[dateKey]" :key="index">
+          <el-card @click="openLive(o.liveId)">
+            <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
+            <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 1 ? '视频' : '电台'}}</span>
+            <div style="padding: 14px;">
+              <span>{{o.title}}</span>
+              <div class="bottom clearfix">
+                <img :src="`https://source.48.cn${o.userInfo.teamLogo}`" class="logo">
+                <time class="time"> {{ o.userInfo.nickname }} </time>
+                <!-- <el-button type="text" class="button">操作按钮</el-button> -->
+              </div>
             </div>
-          </div>
-        </el-card>
+          </el-card>
+        </div>
       </div>
     </div>
   </div>
@@ -159,7 +181,7 @@ const handleScroll = async (e: any) =>{
     border: #7272cc 2px solid;
   }
   .top-mask {
-    background-color: rgb(0, 0, 0);
+    background-color: #ccc;
     opacity: 0.3;
     position: fixed;
     top: 0;
@@ -170,8 +192,8 @@ const handleScroll = async (e: any) =>{
   }
   .liveType {
     position: absolute;
-    bottom: 94px;
-    right: 22px;
+    bottom: 96px;
+    right: 28px;
     padding: 1px 5px 1px 5px;
     border-radius: 5px;
   }
