@@ -1,5 +1,6 @@
-import { rmSync, copyFileSync, mkdirSync } from 'node:fs'
-import { resolve,join } from 'node:path'
+import { rmSync, mkdirSync } from 'node:fs'
+import { execSync } from 'child_process';
+import { join } from 'node:path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import electron from 'vite-plugin-electron'
@@ -9,9 +10,11 @@ import pkg from './package.json'
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   rmSync('dist-electron', { recursive: true, force: true })
-  mkdirSync(join(__dirname, 'dist-electron', 'main'), { recursive: true });
-  copyFileSync(join(__dirname, 'electron', 'main', 'mediaServer.js'), join(__dirname, 'dist-electron', 'main', 'mediaServer.js'))
 
+  //build mediaServer.ts
+  mkdirSync(join(__dirname, 'dist-electron', 'main'), { recursive: true });
+  // tsc --outDir ./dist-electron/main/ electron/main/mediaServer.ts
+  execSync(`tsc --esModuleInterop true --outDir ./dist-electron/main/ electron/main/mediaServer.ts`)
   const isServe = command === 'serve'
   const isBuild = command === 'build'
   const sourcemap = isServe || !!process.env.VSCODE_DEBUG
