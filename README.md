@@ -6,6 +6,8 @@
 - 成员直播/录播多开
 - 支持win/mac版本
 # 下载
+- v0.1.1预览版：https://github.com/Akimaylilll/Partner48/releases/tag/v0.1.1
+# 历史版本
 - v0.1.0预览版：https://github.com/Akimaylilll/Partner48/releases/tag/v0.1.0
 # 注意🚨
 - 项目以交流学习为主要目的
@@ -17,4 +19,3 @@
 - 48tools：https://github.com/duan602728596/48tools
 - electron-vite-vue：
 https://github.com/electron-vite/electron-vite-vue
-- ffmpeg-static： https://github.com/eugeneware/ffmpeg-static
