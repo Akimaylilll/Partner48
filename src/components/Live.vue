@@ -141,7 +141,7 @@ const clcStyle = computed(() => {
 .read-the-docs {
   color: #888;
 }
-:v-deep .dplayer-menu-show {
+#myVideo >>> .dplayer-menu-show {
   display: none !important;
 }
 #myVideo >>> .dplayer-video-current {
