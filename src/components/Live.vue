@@ -6,21 +6,30 @@ import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import DPlayer, { DPlayerEvents } from 'dplayer'
 import { closeLiveWin } from '../renderer/index'
+import Danmu from "./Danmu.vue";
+import NimChatroomSocket from '../utils/NimChatroomSocket';
 
-defineProps<{ msg: string }>()
+const videoDiv = ref<any>(null);
 
 const count = ref(0)
 const videoId = ref('')
-let isLive = true;
+let isLive = ref(true);
 let isPause = true;
 let liveType = ref(1);
+let now_time = ref(0);
+let danmuData = ref([]);
+let danmuBottom = ref(0);
+let room_id = "";
 let flvPlayer: flvjs.Player | null = null;
-ipcRenderer.once('open-video-id', function (event, arg, userName, source, type) { // 接收到Main进程返回的消息
+
+ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, danmus, roomId) { // 接收到Main进程返回的消息
   videoId.value = arg;
   liveType.value = type;
+  danmuData.value = danmus;
   document.title = userName;
+  room_id = roomId;
   if(source.indexOf('.m3u8') > -1){
-    isLive = false;
+    isLive.value = false;
   }
   setTimeout(() => {
     initVideoSourc(source);
@@ -92,11 +101,23 @@ function livePlaer (src: string) {
   return dp;
 }
 
+function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
+  const filterMessage: Array<any> = [];
+  for (const item of event) {
+    // console.log(item);
+    if(item.type === "text") {
+      const custom = JSON.parse(item.custom);
+      // console.log(custom);
+      danmuData.value.push([0, 0, 16777215, custom.user.nickName, item.text] as never)
+    }
+  }
+}
+
 function initVideoSourc(source: string) {
-  const src = isLive ?
+  const src = isLive.value ?
     `http://localhost:8936/live/${videoId.value}.flv` :
       source;
-  const dp: DPlayer = isLive ? livePlaer(src) : recordPlaer(src);
+  const dp: DPlayer = isLive.value ? livePlaer(src) : recordPlaer(src);
   dp.on('pause' as DPlayerEvents, function() {
     isPause = false;
   });
@@ -107,8 +128,26 @@ function initVideoSourc(source: string) {
     alert('直播结束')
     closeLiveWin(videoId.value);
   });
+  dp.on('playing' as DPlayerEvents, function() {
+    now_time.value = dp.video.currentTime;
+  });
   dp.fullScreen.request('web');
   dp.play();
+
+  //dplayer-controller
+  Object.keys(videoDiv.value.childNodes).map(index => {
+    const item = videoDiv.value.childNodes[index];
+    if(item.className === "dplayer-controller") {
+      danmuBottom.value = item.clientHeight;
+    }
+  });
+  if(room_id) {
+    const danmu = new NimChatroomSocket({
+      roomId: room_id,
+      onMessage: handleNewMessage
+    });
+    danmu.init();
+  }
 }
 
 onMounted(async() => {
@@ -130,16 +169,32 @@ const clcStyle = computed(() => {
   style["width"] = "100% !important";
   style["--video-display"] = liveType.value === 1 ? "block" : "none";
   return style;
-})
+});
+const clcDanmuStyle = computed(() => {
+  const style: any = {};
+  style["--danmu-bottom"] = (danmuBottom.value + 5) + "px";
+  return style;
+});
 </script>
 
 <template>
-  <div id="myVideo" :style="clcStyle"></div>
+  <div id="myVideo" ref="videoDiv" :style="clcStyle">
+  </div>
+  <Danmu class="danmu" :style="clcDanmuStyle" v-model:nowtime="now_time" :danmuData="danmuData" :is-live="isLive"></Danmu>
 </template>
 
 <style scoped>
 .read-the-docs {
   color: #888;
+}
+.danmu {
+  bottom: var(--danmu-bottom) !important;
+  position: absolute;
+  z-index: 100000;
+  left: 0;
+  background-color: transparent;
+  pointer-events: none;
+  max-height: 30%;
 }
 #myVideo >>> .dplayer-menu-show {
   display: none !important;

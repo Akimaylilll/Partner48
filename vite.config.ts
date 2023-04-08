@@ -1,4 +1,4 @@
-import { rmSync, mkdirSync } from 'node:fs'
+import { rmSync, mkdirSync, readdirSync, existsSync } from 'node:fs'
 import { execSync } from 'child_process';
 import { join } from 'node:path'
 import { defineConfig } from 'vite'
@@ -15,6 +15,12 @@ export default defineConfig(({ command }) => {
   mkdirSync(join(__dirname, 'dist-electron', 'main'), { recursive: true });
   // tsc --outDir ./dist-electron/main/ electron/main/mediaServer.ts
   execSync(`tsc --esModuleInterop true --outDir ./dist-electron/main/ electron/main/mediaServer.ts`)
+  if(existsSync(join(__dirname, 'electron', 'main', 'worker'))) {
+    const wokerFiles = readdirSync(join(__dirname, 'electron', 'main', 'worker'));
+    wokerFiles.map(file => {
+      execSync(`tsc --esModuleInterop true --outDir ./dist-electron/main/worker/ electron/main/worker/${ file }`)
+    });
+  }
   const isServe = command === 'serve'
   const isBuild = command === 'build'
   const sourcemap = isServe || !!process.env.VSCODE_DEBUG
