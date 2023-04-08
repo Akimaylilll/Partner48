@@ -1,10 +1,10 @@
-import { BrowserWindow, UtilityProcess } from 'electron';
+import { app, BrowserWindow, UtilityProcess } from 'electron';
 import { Pocket } from '../pocket/pocket';
-import { join, basename } from 'node:path';
+import { join, basename, dirname } from 'node:path';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import ffprobePath from 'ffprobe-static';
-import { readFileSync } from 'fs';
+import { readFileSync, rmSync, existsSync } from 'fs';
 import download from "download";
 
 import log  from 'electron-log';
@@ -119,8 +119,9 @@ export class VideoWin {
   }
 
   async getDanmuData(filepath: string) : Promise<Array<any>> {
-    await download(filepath, join(__dirname, '/download'));
-    const lrcFilePath: string = join(__dirname, '/download', basename(filepath));
+    const downloadPath = dirname(app.getAppPath());
+    await download(filepath, join(downloadPath, '/download'));
+    const lrcFilePath: string = join(downloadPath, '/download', basename(filepath));
     const lrcFileData: string = readFileSync(lrcFilePath, 'utf-8');
     const danmuData :any[] = [];
     lrcFileData.split(/\r?\n/).forEach(raw => {
@@ -131,6 +132,9 @@ export class VideoWin {
         danmuData.push([dtime, 0, 16777215, dauthor, dmessage]);
       }
     });
+    if(existsSync(lrcFilePath)) {
+      rmSync(lrcFilePath);
+    }
     return danmuData;
   }
 }
