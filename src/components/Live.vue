@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import flvjs from 'flv.js'
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import DPlayer, { DPlayerEvents } from 'dplayer'
@@ -14,11 +14,12 @@ const videoDiv = ref<any>(null);
 const count = ref(0)
 const videoId = ref('')
 let isLive = ref(true);
-let isPause = true;
+let isPause = ref(false);
 let liveType = ref(1);
 let now_time = ref(0);
 let danmuData = ref([]);
 let danmuBottom = ref(0);
+const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 let room_id = "";
 let flvPlayer: flvjs.Player | null = null;
 
@@ -119,10 +120,10 @@ function initVideoSourc(source: string) {
       source;
   const dp: DPlayer = isLive.value ? livePlaer(src) : recordPlaer(src);
   dp.on('pause' as DPlayerEvents, function() {
-    isPause = false;
+    isPause.value = true;
   });
   dp.on('play' as DPlayerEvents, function() {
-    isPause = true;
+    isPause.value = false;
   });
   dp.on('ended' as DPlayerEvents, function() {
     alert('直播结束')
@@ -151,10 +152,15 @@ function initVideoSourc(source: string) {
 }
 
 onMounted(async() => {
+  window.onresize = () => {
+    return (() => {
+      screenWidth.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
+    })()
+  }
   nextTick(() => {
     // initVideoSourc();
     setInterval(() => {
-      if (flvPlayer?.buffered.length && isPause) {
+      if (flvPlayer?.buffered.length && !isPause.value) {
         let end = flvPlayer.buffered.end(0);//获取当前buffered值
         let diff = end - flvPlayer.currentTime;//获取buffered与currentTime的差值
         if (diff >= 0.5) {//如果差值大于等于0.5 手动跳帧 这里可根据自身需求来定
@@ -164,6 +170,11 @@ onMounted(async() => {
     }, 2000); //2000毫秒执行一次
   })
 });
+
+watch(screenWidth, (newVal) => {
+  screenWidth.value = newVal;
+});
+
 const clcStyle = computed(() => {
   const style: any = {};
   style["width"] = "100% !important";
@@ -172,6 +183,7 @@ const clcStyle = computed(() => {
 });
 const clcDanmuStyle = computed(() => {
   const style: any = {};
+  style["--danmu-width"] = (screenWidth.value - 10) + "px";
   style["--danmu-bottom"] = (danmuBottom.value + 5) + "px";
   return style;
 });
@@ -180,7 +192,7 @@ const clcDanmuStyle = computed(() => {
 <template>
   <div id="myVideo" ref="videoDiv" :style="clcStyle">
   </div>
-  <Danmu class="danmu" :style="clcDanmuStyle" v-model:nowtime="now_time" :danmuData="danmuData" :is-live="isLive"></Danmu>
+  <Danmu class="danmu" :style="clcDanmuStyle" v-model:nowtime="now_time" :danmuData="danmuData" :is-live="isLive" :is-pause = "isPause"></Danmu>
 </template>
 
 <style scoped>
@@ -189,6 +201,7 @@ const clcDanmuStyle = computed(() => {
 }
 .danmu {
   bottom: var(--danmu-bottom) !important;
+  width: var(--danmu-width) !important;
   position: absolute;
   z-index: 100000;
   left: 0;
