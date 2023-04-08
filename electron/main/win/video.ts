@@ -1,11 +1,9 @@
 import { app, BrowserWindow, UtilityProcess } from 'electron';
 import { Pocket } from '../pocket/pocket';
-import { join, basename, dirname } from 'node:path';
-import ffmpeg from 'fluent-ffmpeg';
-import ffmpegPath from 'ffmpeg-static';
-import ffprobePath from 'ffprobe-static';
+import { join, basename, dirname, resolve } from 'node:path';
 import { readFileSync, rmSync, existsSync } from 'fs';
 import download from "download";
+import { fork } from 'child_process';
 
 import log  from 'electron-log';
 import { Tools } from '../utils';
@@ -17,10 +15,10 @@ export class VideoWin {
   private parentWin: BrowserWindow = null;
   private height: number = 620;
   private width: number = 320;
-  private worker: UtilityProcess  = null;
   public videoWin: BrowserWindow = null;
   private danmuData: Array<any> = [];
   private roomId: string = "";
+  private ffmpegServer: any = null;
 
   public constructor(parentWin: BrowserWindow, liveId: string) {
     this.liveId = liveId;
@@ -33,7 +31,7 @@ export class VideoWin {
       if(this.source.indexOf('.m3u8') === -1){
         this.roomId = content.roomId;
         try{
-          this.ffmpegServer(this.source, this.liveId.toString(), "localhost", "8935");
+          this.runFfmpegServer(this.source, this.liveId.toString(), "localhost", "8935");
         }
         catch(e){
           log.error(e);
@@ -61,7 +59,8 @@ export class VideoWin {
     });
 
     this.videoWin.on('close', (event) => {
-      this.worker && this.worker.kill()
+      this.ffmpegServer.kill();
+      this.ffmpegServer = null;
     });
 
     const url = process.env.VITE_DEV_SERVER_URL;
@@ -81,41 +80,18 @@ export class VideoWin {
     }, 1000);
   }
 
-  ffmpegServer(source, liveId, host, port) {
-    ffmpeg.setFfmpegPath(ffmpegPath.replace(
-      'app.asar',
-      'app.asar.unpacked'
-    ));
-    ffmpeg.setFfprobePath(ffprobePath.path.replace(
-      'app.asar',
-      'app.asar.unpacked'
-    ));
-    const command = ffmpeg(source)
-      .inputOptions('-re')
-      .on('start', function (commandLine) {
-        log.info('[' + new Date() + '] Vedio is Pushing !');
-        log.info('commandLine: ' + commandLine);
-      })
-      .on('error', function (err, stdout, stderr) {
-        log.error('error: ' + err.message);
-        log.error('stdout: ' + stdout);
-        log.error('stderr: ' + stderr);
-      })
-      .on('end', function () {
-        log.info('[' + new Date() + '] Vedio Pushing is Finished !');
-      })
-      .addOptions([
-        '-c:v libx264',
-        '-preset superfast',
-        '-tune zerolatency',
-        '-c:a aac',
-        '-ar 44100'
-      ])
-      .format('flv');
-
-    command.output(`rtmp://${host}:${port}/live/${liveId}`, {
-      end: true
-    }).run();
+  runFfmpegServer(source, liveId, host, port) {
+    const ffmpegServerFile = resolve(join(__dirname, 'worker', `FfmpegServer.js`)).replace(/\\/g, '/');;
+    this.ffmpegServer = fork(ffmpegServerFile,
+      [source, liveId, host, port], {
+      silent: true
+    });
+    this.ffmpegServer.stdout.on('data', (result) => {
+      log.info(Buffer.from(result).toString());
+    });
+    this.ffmpegServer.stderr.on('data', (result) => {
+      log.error(Buffer.from(result).toString());
+    });
   }
 
   async getDanmuData(filepath: string) : Promise<Array<any>> {

@@ -5,6 +5,7 @@ import { Listeners } from './listeners';
 import log  from 'electron-log';
 import { Tools } from './utils';
 import { Worker } from 'worker_threads';
+import { fork } from 'child_process';
 
 // The built directory structure
 //
@@ -47,7 +48,6 @@ const testPorts = async () =>{
     await Tools.killPort(info.pId);
   } catch (e) { }
 }
-testPorts();
 // Remove electron security warnings
 // This warning only shows in development mode
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
@@ -82,12 +82,12 @@ async function createWindow() {
     win.loadFile(indexHtml)
   }
 
+  testPorts();
   //测试
   new Listeners(win);
   const tsFile = resolve(join(__dirname, `mediaServer.js`)).replace(/\\/g, '/');
-  const worker = new Worker(tsFile, {
-    stdout: true,
-    stderr: true
+  const worker = fork(tsFile, {
+    silent: true
   });
   worker.stdout.on('data', (result) => {
     log.info(Buffer.from(result).toString());
@@ -110,9 +110,8 @@ async function createWindow() {
 
 function runDanmuServer() {
   const danmuServerFile = resolve(join(__dirname, 'worker', `DanmuServer.js`)).replace(/\\/g, '/');;
-  const danmuServer = new Worker(danmuServerFile, {
-    stdout: true,
-    stderr: true
+  const danmuServer = fork(danmuServerFile, {
+    silent: true
   });
   danmuServer.stdout.on('data', (result) => {
     log.info(Buffer.from(result).toString());
