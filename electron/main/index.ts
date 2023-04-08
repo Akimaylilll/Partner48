@@ -42,6 +42,10 @@ const testPorts = async () =>{
     const info:any = await Tools.findPort('8935');
     await Tools.killPort(info.pId);
   } catch (e) { }
+  try {
+    const info:any = await Tools.findPort('8173');
+    await Tools.killPort(info.pId);
+  } catch (e) { }
 }
 testPorts();
 // Remove electron security warnings
@@ -91,6 +95,7 @@ async function createWindow() {
   worker.stderr.on('data', (result) => {
     log.error(Buffer.from(result).toString());
   });
+  runDanmuServer();
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
     win?.webContents.send('main-process-message', new Date().toLocaleString())
@@ -101,6 +106,20 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+}
+
+function runDanmuServer() {
+  const danmuServerFile = resolve(join(__dirname, 'worker', `DanmuServer.js`)).replace(/\\/g, '/');;
+  const danmuServer = new Worker(danmuServerFile, {
+    stdout: true,
+    stderr: true
+  });
+  danmuServer.stdout.on('data', (result) => {
+    log.info(Buffer.from(result).toString());
+  });
+  danmuServer.stderr.on('data', (result) => {
+    log.error(Buffer.from(result).toString());
+  });
 }
 
 app.whenReady().then(createWindow)

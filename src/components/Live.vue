@@ -19,6 +19,7 @@ let liveType = ref(1);
 let now_time = ref(0);
 let danmuData = ref([]);
 let danmuBottom = ref(0);
+const isDanmuShow = ref(true);
 const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 let room_id = "";
 let flvPlayer: flvjs.Player | null = null;
@@ -42,6 +43,10 @@ function recordPlaer (src: string) {
     live: false,
     preload: 'auto',
     container: document.getElementById('myVideo'),
+    danmaku: {
+      id: '1234567890',
+      api: 'http://localhost:8173/'
+    },
     video: {
       url: src,
       type: 'customHls',
@@ -76,6 +81,10 @@ function livePlaer (src: string) {
     live: true,
     preload: 'auto',
     container: document.getElementById('myVideo'),
+    danmaku: {
+      id: '1234567890',
+      api: 'http://localhost:8173/'
+    },
     video: {
       url: src, // url地址
       type: 'customFlv',
@@ -139,6 +148,12 @@ function initVideoSourc(source: string) {
   dp.on('fullscreen_cancel' as DPlayerEvents,function() {
     dp.fullScreen.request('web');
   });
+  dp.on('danmaku_show' as DPlayerEvents,function() {
+    isDanmuShow.value = true;
+  });
+  dp.on('danmaku_hide' as DPlayerEvents,function() {
+    isDanmuShow.value = false;
+  });
   dp.fullScreen.request('web');
   dp.play();
 
@@ -199,7 +214,15 @@ const clcDanmuStyle = computed(() => {
 <template>
   <div id="myVideo" ref="videoDiv" :style="clcStyle">
   </div>
-  <Danmu class="danmu" :style="clcDanmuStyle" v-model:nowtime="now_time" :danmuData="danmuData" :is-live="isLive" :is-pause = "isPause"></Danmu>
+  <Danmu class="danmu"
+    :style="clcDanmuStyle"
+    v-model:nowtime="now_time"
+    :danmuData="danmuData"
+    :is-live="isLive"
+    :is-pause = "isPause"
+    :is-show = "isDanmuShow"
+    >
+  </Danmu>
 </template>
 
 <style scoped>
@@ -222,4 +245,14 @@ const clcDanmuStyle = computed(() => {
 #myVideo >>> .dplayer-video-current {
   display: var(--video-display) !important;
 }
+#myVideo >>> .dplayer-comment {
+  display: none;
+}
+#myVideo >>> .dplayer-setting-danunlimit {
+  display: none;
+}
+#myVideo >>> .dplayer-setting-danmaku {
+  display: none;
+}
+
 </style>
