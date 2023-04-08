@@ -85,16 +85,7 @@ async function createWindow() {
   testPorts();
   //测试
   new Listeners(win);
-  const tsFile = resolve(join(__dirname, `mediaServer.js`)).replace(/\\/g, '/');
-  const worker = fork(tsFile, {
-    silent: true
-  });
-  worker.stdout.on('data', (result) => {
-    log.info(Buffer.from(result).toString());
-  });
-  worker.stderr.on('data', (result) => {
-    log.error(Buffer.from(result).toString());
-  });
+  runMediaServer();
   runDanmuServer();
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
@@ -106,6 +97,19 @@ async function createWindow() {
     if (url.startsWith('https:')) shell.openExternal(url)
     return { action: 'deny' }
   })
+}
+
+function runMediaServer() {
+  const tsFile = resolve(join(__dirname, 'worker',`MediaServer.js`)).replace(/\\/g, '/');
+  const worker = fork(tsFile, {
+    silent: true
+  });
+  worker.stdout.on('data', (result) => {
+    log.info(Buffer.from(result).toString());
+  });
+  worker.stderr.on('data', (result) => {
+    log.error(Buffer.from(result).toString());
+  });
 }
 
 function runDanmuServer() {

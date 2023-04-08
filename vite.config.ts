@@ -13,8 +13,6 @@ export default defineConfig(({ command }) => {
 
   //build mediaServer.ts
   mkdirSync(join(__dirname, 'dist-electron', 'main'), { recursive: true });
-  // tsc --outDir ./dist-electron/main/ electron/main/mediaServer.ts
-  execSync(`tsc --esModuleInterop true --outDir ./dist-electron/main/ electron/main/mediaServer.ts`)
   if(existsSync(join(__dirname, 'electron', 'main', 'worker'))) {
     const wokerFiles = readdirSync(join(__dirname, 'electron', 'main', 'worker'));
     wokerFiles.map(file => {
