@@ -84,4 +84,21 @@ export class Tools {
 			}
 		});
 	}
+
+	public static toSec(time: string | undefined) {
+		if(!time) {
+			return;
+		}
+		let s: number = 0;
+		const hour: string = time.split(':')[0];
+		const min: string = time.split(':')[1];
+		const sec: string = time.split(':')[2];
+		if(!hour || !min || !sec) {
+			return;
+		}
+		s = Number(hour) * 3600 + Number(min) * 60 + Number(sec);
+		return s;
+	}
+
+
 }

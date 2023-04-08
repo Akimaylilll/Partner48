@@ -1,11 +1,14 @@
 import { BrowserWindow, UtilityProcess } from 'electron';
 import { Pocket } from '../pocket/pocket';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
 import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
-import ffprobePath from 'ffprobe-static'
+import ffprobePath from 'ffprobe-static';
+import { readFileSync } from 'fs';
+import download from "download";
 
 import log  from 'electron-log';
+import { Tools } from '../utils';
 export class VideoWin {
   public source: string = null;
   public liveId: string = null;
@@ -16,22 +19,27 @@ export class VideoWin {
   private width: number = 320;
   private worker: UtilityProcess  = null;
   public videoWin: BrowserWindow = null;
+  private danmuData: Array<any> = [];
+  private roomId: string = "";
 
   public constructor(parentWin: BrowserWindow, liveId: string) {
     this.liveId = liveId;
     this.parentWin = parentWin;
     const pocket: Pocket = new Pocket();
-    pocket.getOneLiveById(liveId).then((content) => {
+    pocket.getOneLiveById(liveId).then(async (content) => {
       this.source = content.playStreamPath;
       this.liveUser = content.user.userName;
       this.liveType = content.liveType;
       if(this.source.indexOf('.m3u8') === -1){
+        this.roomId = content.roomId;
         try{
           this.ffmpegServer(this.source, this.liveId.toString(), "localhost", "8935");
         }
         catch(e){
           log.error(e);
         }
+      } else {
+        this.danmuData = await this.getDanmuData(content.msgFilePath);
       }
       this.open();
     });
@@ -68,7 +76,7 @@ export class VideoWin {
       // videoWin.webContents.openDevTools()
     }
     setTimeout(() => {
-      this.videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source, this.liveType);
+      this.videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source, this.liveType, this.danmuData, this.roomId);
       this.videoWin.show();
     }, 1000);
   }
@@ -108,5 +116,21 @@ export class VideoWin {
     command.output(`rtmp://${host}:${port}/live/${liveId}`, {
       end: true
     }).run();
+  }
+
+  async getDanmuData(filepath: string) : Promise<Array<any>> {
+    await download(filepath, join(__dirname, '/download'));
+    const lrcFilePath: string = join(__dirname, '/download', basename(filepath));
+    const lrcFileData: string = readFileSync(lrcFilePath, 'utf-8');
+    const danmuData :any[] = [];
+    lrcFileData.split(/\r?\n/).forEach(raw => {
+      const dtime: number | undefined = Tools.toSec(raw.match(/\[(.*?)\]/)?.[1]);
+      const dauthor: string = raw.match(/\](.*?)\t/)?.[1] || "";
+      const dmessage: string = raw.substring(raw.indexOf('\t') + 1, raw.length);
+      if(dtime && dmessage) {
+        danmuData.push([dtime, 0, 16777215, dauthor, dmessage]);
+      }
+    });
+    return danmuData;
   }
 }
