@@ -13,6 +13,10 @@ const props = defineProps({
     type: Boolean,
 		default: false
   },
+  isShow: {
+    type: Boolean,
+		default: true
+  },
   danmuData: {
     type: Array<any>,
 		default: []
@@ -27,14 +31,14 @@ onMounted(() => {
       if(!props.isPause) {
         emit('update:nowtime', props.nowtime + 0.2);
       }
-      danmu.value.scrollTop > -1 && (danmu.value.scrollTop = danmu.value.scrollHeight);
+      props.isShow && (danmu.value.scrollTop > -1) && (danmu.value.scrollTop = danmu.value.scrollHeight);
     }, 200);
   })
 });
 </script>
 
 <template>
-  <div ref="danmu" style="display:inline-grid;overflow-y: hidden;">
+  <div v-if="isShow" ref="danmu" style="display:inline-grid;overflow-y: hidden;">
     <template v-for="(o, index) in danmuData">
       <span  v-if="isLive || (!isLive && o[0] < nowtime)" class="message" :key="index">
         <span class="text">
