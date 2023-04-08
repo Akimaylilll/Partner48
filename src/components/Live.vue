@@ -132,6 +132,13 @@ function initVideoSourc(source: string) {
   dp.on('playing' as DPlayerEvents, function() {
     now_time.value = dp.video.currentTime;
   });
+  //退出全屏事件
+  dp.on('webfullscreen_cancel' as DPlayerEvents,function() {
+    dp.fullScreen.request('web');
+  });
+  dp.on('fullscreen_cancel' as DPlayerEvents,function() {
+    dp.fullScreen.request('web');
+  });
   dp.fullScreen.request('web');
   dp.play();
 
