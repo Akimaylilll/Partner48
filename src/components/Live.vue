@@ -239,20 +239,22 @@ const clcDanmuStyle = computed(() => {
   pointer-events: none;
   max-height: 30%;
 }
-#myVideo >>> .dplayer-menu-show {
+#myVideo :deep(.dplayer-menu-show) {
   display: none !important;
 }
-#myVideo >>> .dplayer-video-current {
+#myVideo :deep(.dplayer-video-current) {
   display: var(--video-display) !important;
 }
-#myVideo >>> .dplayer-comment {
+#myVideo :deep(.dplayer-comment) {
   display: none;
 }
-#myVideo >>> .dplayer-setting-danunlimit {
+#myVideo :deep(.dplayer-setting-danunlimit) {
   display: none;
 }
-#myVideo >>> .dplayer-setting-danmaku {
+#myVideo :deep(.dplayer-setting-danmaku) {
   display: none;
 }
-
+#myVideo :deep(.dplayer-full) {
+  display: none;
+}
 </style>
