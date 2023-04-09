@@ -8,6 +8,7 @@ import DPlayer, { DPlayerEvents } from 'dplayer'
 import { closeLiveWin } from '../renderer/index'
 import Danmu from "./Danmu.vue";
 import NimChatroomSocket from '../utils/NimChatroomSocket';
+import { NONAME } from 'dns'
 
 const videoDiv = ref<any>(null);
 
@@ -20,6 +21,9 @@ let now_time = ref(0);
 let danmuData = ref([]);
 let danmuBottom = ref(0);
 const isDanmuShow = ref(true);
+const isPointerEvents = ref(false);
+const isScroll = ref(false);
+let timer: any = null;
 const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 let room_id = "";
 let flvPlayer: flvjs.Player | null = null;
@@ -207,8 +211,18 @@ const clcDanmuStyle = computed(() => {
   const style: any = {};
   style["--danmu-width"] = (screenWidth.value - 10) + "px";
   style["--danmu-bottom"] = (danmuBottom.value + 5) + "px";
+  style["--danmu-pointer-events"] = isPointerEvents.value ? 'auto' : 'none';
   return style;
 });
+
+const danmuScroll = ()=> {
+  isPointerEvents.value = true;
+  isScroll.value = true;
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    isScroll.value = false;
+  }, 5000);
+}
 </script>
 
 <template>
@@ -221,7 +235,10 @@ const clcDanmuStyle = computed(() => {
     :is-live="isLive"
     :is-pause = "isPause"
     :is-show = "isDanmuShow"
-    >
+    :is-scroll="isScroll"
+    v-model:is-pointer-events = "isPointerEvents"
+    @scroll="danmuScroll()"
+  >
   </Danmu>
 </template>
 
@@ -236,7 +253,7 @@ const clcDanmuStyle = computed(() => {
   z-index: 100000;
   left: 0;
   background-color: transparent;
-  pointer-events: none;
+  pointer-events: var(--danmu-pointer-events);
   max-height: 30%;
 }
 #myVideo :deep(.dplayer-menu-show) {
