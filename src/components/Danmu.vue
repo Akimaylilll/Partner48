@@ -103,6 +103,10 @@ const spanMouseleave = () => {
   display: inline-block;
   margin-top: 3px;
   margin-bottom: 3px;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .nickName {
   color: #ccc;
