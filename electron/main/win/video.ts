@@ -59,7 +59,7 @@ export class VideoWin {
     });
 
     this.videoWin.on('close', (event) => {
-      this.ffmpegServer.kill();
+      this.ffmpegServer && this.ffmpegServer.kill();
       this.ffmpegServer = null;
     });
 
