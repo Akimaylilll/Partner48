@@ -22,18 +22,29 @@ export class Listeners {
     });
 
     ipcMain.on('open-live-query', (event, ...args) => {
-      const video = new VideoWin(win, args[0]);
-      this.videoWinList.push(video);
+      const video = new VideoWin(win, args[0]);\
+      // TODO: 待优化
+      setTimeout(() => {
+        if(video.videoWin.isVisible()) {
+          this.videoWinList.push(video);
+        } else {
+          video.videoWin.close();
+        }
+      }, 5000);
       event.reply('open-live-reply', video.source);
     });
     ipcMain.on('close-live-win', (event, ...args) => {
-      this.videoWinList.map((item, index) => {
-        if(item.liveId == args[0]) {
-          log.info("close the liveId:" + args[0]);
-          item.videoWin.close();
-          this.videoWinList.splice(index, 1);
-        }
-      })
+      try{
+        this.videoWinList.map((item, index) => {
+          if(item.liveId == args[0]) {
+            log.info("close the liveId:" + args[0]);
+            item.videoWin.close();
+            this.videoWinList.splice(index, 1);
+          }
+        })
+      } catch (e) {
+        log.error(`close the liveId ${ args[0] } is error: ${ e }` );
+      }
     });
   }
 }
