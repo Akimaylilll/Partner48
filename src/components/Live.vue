@@ -129,7 +129,7 @@ function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
 
 function initVideoSourc(source: string) {
   const src = isLive.value ?
-    `http://localhost:8936/live/${videoId.value}.flv` :
+    `ws://localhost:8936/live/${videoId.value}.flv` :
       source;
   const dp: DPlayer = isLive.value ? livePlaer(src) : recordPlaer(src);
   dp.on('pause' as DPlayerEvents, function() {
