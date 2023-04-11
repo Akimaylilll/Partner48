@@ -25,6 +25,9 @@ export class Listeners {
       const video = new VideoWin(win, args[0]);
       // TODO: 待优化
       setTimeout(() => {
+        if(video.videoWin.isDestroyed()){
+          return;
+        }
         if(video.videoWin.isVisible()) {
           this.videoWinList.push(video);
         } else {
