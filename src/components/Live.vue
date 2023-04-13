@@ -1,15 +1,13 @@
 <script setup lang="ts">
 
 import flvjs from 'flv.js'
-import { ref, onMounted, nextTick, computed, watch } from 'vue'
+import { ref, onMounted, nextTick, computed, watch, createApp, h } from 'vue'
 import { ipcRenderer } from 'electron'
 import Hls from 'hls.js'
 import DPlayer, { DPlayerEvents } from 'dplayer'
-import { closeLiveWin } from '../renderer/index'
+import { closeLiveWin, getIMKey } from '../renderer/index'
 import Danmu from "./Danmu.vue";
 import NimChatroomSocket from '../utils/NimChatroomSocket';
-import { NONAME } from 'dns'
-
 const videoDiv = ref<any>(null);
 
 const count = ref(0)
@@ -27,6 +25,7 @@ let timer: any = null;
 const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 let room_id = "";
 let flvPlayer: flvjs.Player | null = null;
+const emit = defineEmits(['update:now_time', 'update:isPointerEvents']);
 
 ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, danmus, roomId) { // 接收到Main进程返回的消息
   videoId.value = arg;
@@ -37,8 +36,8 @@ ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, 
   if(source.indexOf('.m3u8') > -1){
     isLive.value = false;
   }
-  setTimeout(() => {
-    initVideoSourc(source);
+  setTimeout(async () => {
+    await initVideoSourc(source);
   }, 1000);
 });
 
@@ -116,7 +115,6 @@ function livePlaer (src: string) {
 }
 
 function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
-  const filterMessage: Array<any> = [];
   for (const item of event) {
     // console.log(item);
     if(item.type === "text") {
@@ -127,7 +125,7 @@ function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
   }
 }
 
-function initVideoSourc(source: string) {
+async function initVideoSourc(source: string) {
   const src = isLive.value ?
     `ws://localhost:8936/live/${videoId.value}.flv` :
       source;
@@ -168,12 +166,13 @@ function initVideoSourc(source: string) {
       danmuBottom.value = item.clientHeight;
     }
   });
+  const appKey = (await getIMKey()) as string;
   if(room_id) {
     const danmu = new NimChatroomSocket({
       roomId: room_id,
       onMessage: handleNewMessage
     });
-    danmu.init();
+    danmu.init(appKey);
   }
 }
 
@@ -183,8 +182,42 @@ onMounted(async() => {
       screenWidth.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
     })()
   }
+
   nextTick(() => {
     // initVideoSourc();
+    setTimeout(() =>{
+      //挂载danmu
+      const danmu = {
+        render() {
+          return h(Danmu, {
+            style: {
+              bottom: `${danmuBottom.value + 5}px !important`,
+              width: `${screenWidth.value - 10}px !important`,
+              position: "absolute",
+              "z-index": 1,
+              left: 0,
+              "background-color": "transparent",
+              "pointer-events": "var(--danmu-pointer-events)",
+              "max-height": "30%"
+            },
+            danmuData: danmuData.value,
+            isPause: isPause.value,
+            isLive: isLive.value,
+            isShow: isDanmuShow.value,
+            isScroll: isScroll.value,
+            nowtime: now_time.value,
+            "onUpdate:nowtime": (value: number) => emit("update:now_time", value),
+            isPointerEvents: isPointerEvents.value,
+            "onUpdate:isPointerEvents": (value: boolean) => emit("update:isPointerEvents", value),
+            onScroll: () => danmuScroll()
+          });
+        }
+      }
+      const dom$ = document.querySelector('.dplayer-menu');
+      if(dom$){
+        createApp(danmu).mount(dom$);
+      }
+    }, 2000);
     setInterval(() => {
       if (flvPlayer?.buffered.length && !isPause.value) {
         let end = flvPlayer.buffered.end(0);//获取当前buffered值
@@ -205,12 +238,6 @@ const clcStyle = computed(() => {
   const style: any = {};
   style["width"] = "100% !important";
   style["--video-display"] = liveType.value === 1 ? "block" : "none";
-  return style;
-});
-const clcDanmuStyle = computed(() => {
-  const style: any = {};
-  style["--danmu-width"] = (screenWidth.value - 10) + "px";
-  style["--danmu-bottom"] = (danmuBottom.value + 5) + "px";
   style["--danmu-pointer-events"] = isPointerEvents.value ? 'auto' : 'none';
   return style;
 });
@@ -228,33 +255,11 @@ const danmuScroll = ()=> {
 <template>
   <div id="myVideo" ref="videoDiv" :style="clcStyle">
   </div>
-  <Danmu class="danmu"
-    :style="clcDanmuStyle"
-    v-model:nowtime="now_time"
-    :danmuData="danmuData"
-    :is-live="isLive"
-    :is-pause = "isPause"
-    :is-show = "isDanmuShow"
-    :is-scroll="isScroll"
-    v-model:is-pointer-events = "isPointerEvents"
-    @scroll="danmuScroll()"
-  >
-  </Danmu>
 </template>
 
 <style scoped>
 .read-the-docs {
   color: #888;
-}
-.danmu {
-  bottom: var(--danmu-bottom) !important;
-  width: var(--danmu-width) !important;
-  position: absolute;
-  z-index: 100000;
-  left: 0;
-  background-color: transparent;
-  pointer-events: var(--danmu-pointer-events);
-  max-height: 30%;
 }
 #myVideo :deep(.dplayer-menu-show) {
   display: none !important;
@@ -268,8 +273,9 @@ const danmuScroll = ()=> {
 #myVideo :deep(.dplayer-setting-danunlimit) {
   display: none;
 }
-#myVideo :deep(.dplayer-setting-danmaku) {
-  display: none;
+#myVideo :deep(.dplayer-menu) {
+  position: unset;
+  display: block;
 }
 #myVideo :deep(.dplayer-full) {
   display: none;
