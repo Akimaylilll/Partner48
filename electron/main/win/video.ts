@@ -57,6 +57,7 @@ export class VideoWin {
         contextIsolation: false
       }
     });
+    this.videoWin.menuBarVisible = false;
 
     this.videoWin.on('close', (event) => {
       this.ffmpegServer && this.ffmpegServer.kill();

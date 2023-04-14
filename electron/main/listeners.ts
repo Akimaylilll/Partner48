@@ -2,6 +2,7 @@ import { ipcMain, BrowserWindow } from 'electron'
 import { Pocket } from './pocket/pocket';
 import { VideoWin } from './win/video';
 import log  from 'electron-log';
+import Store from 'electron-store';
 
 export class Listeners {
   private videoWinList: Array<VideoWin> = [];
@@ -41,13 +42,26 @@ export class Listeners {
         this.videoWinList.map((item, index) => {
           if(item.liveId == args[0]) {
             log.info("close the liveId:" + args[0]);
-            item.videoWin.close();
+            if(!item.videoWin.isDestroyed()){
+              item.videoWin.close();
+            }
             this.videoWinList.splice(index, 1);
           }
         })
       } catch (e) {
         log.error(`close the liveId ${ args[0] } is error: ${ e }` );
       }
+    });
+
+    ipcMain.on('im-key-query', (event, ...args) => {
+      const store = new Store();
+      const imKey = store.get('netease-im-key');
+      event.reply('im-key-reply', imKey);
+    });
+
+    ipcMain.on('set-im-key', (event, ...args) => {
+      const store = new Store();
+      store.set('netease-im-key', args[0]);
     });
   }
 }

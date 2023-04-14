@@ -25,7 +25,7 @@ let timer: any = null;
 const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 let room_id = "";
 let flvPlayer: flvjs.Player | null = null;
-const emit = defineEmits(['update:now_time', 'update:isPointerEvents']);
+const emit = defineEmits([ 'update:isPointerEvents', 'update:now_time']);
 
 ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, danmus, roomId) { // 接收到Main进程返回的消息
   videoId.value = arg;
@@ -187,28 +187,19 @@ onMounted(async() => {
     // initVideoSourc();
     setTimeout(() =>{
       //挂载danmu
+      //TODO: 待优化
       const danmu = {
         render() {
           return h(Danmu, {
-            style: {
-              bottom: `${danmuBottom.value + 5}px !important`,
-              width: `${screenWidth.value - 10}px !important`,
-              position: "absolute",
-              "z-index": 1,
-              left: 0,
-              "background-color": "transparent",
-              "pointer-events": "var(--danmu-pointer-events)",
-              "max-height": "30%"
-            },
             danmuData: danmuData.value,
             isPause: isPause.value,
             isLive: isLive.value,
             isShow: isDanmuShow.value,
             isScroll: isScroll.value,
-            nowtime: now_time.value,
-            "onUpdate:nowtime": (value: number) => emit("update:now_time", value),
             isPointerEvents: isPointerEvents.value,
-            "onUpdate:isPointerEvents": (value: boolean) => emit("update:isPointerEvents", value),
+            "onUpdate:isPointerEvents": (value: boolean) => isPointerEvents.value = value,
+            nowtime: now_time.value,
+            "onUpdate:nowtime": (value: number) => now_time.value = value,
             onScroll: () => danmuScroll()
           });
         }
@@ -234,11 +225,20 @@ watch(screenWidth, (newVal) => {
   screenWidth.value = newVal;
 });
 
+watch(isPointerEvents, (newVal) => {
+    videoDiv?.value && videoDiv.value.style.setProperty("--danmu-pointer-events", newVal ? 'auto' : 'none');
+  }, {
+    immediate: true,
+    deep: true
+  }
+);
+
 const clcStyle = computed(() => {
   const style: any = {};
   style["width"] = "100% !important";
   style["--video-display"] = liveType.value === 1 ? "block" : "none";
   style["--danmu-pointer-events"] = isPointerEvents.value ? 'auto' : 'none';
+  style["--danmu-bottom"] = `${screenWidth.value + 3}px`;
   return style;
 });
 
@@ -280,4 +280,11 @@ const danmuScroll = ()=> {
 #myVideo :deep(.dplayer-full) {
   display: none;
 }
+#myVideo :deep(.dplayer-notice-list) {
+  z-index: 4;
+}
+#myVideo :deep(.dplayer-setting-danmaku) {
+  display: none;
+}
+
 </style>

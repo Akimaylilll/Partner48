@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
-import { getLiveList, openLiveById } from '../renderer/index'
+import { getLiveList, openLiveById } from '../renderer/index';
 defineProps<{ msg: string }>()
 
 let liveList: any = ref([]);

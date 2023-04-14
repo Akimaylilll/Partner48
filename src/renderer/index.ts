@@ -33,10 +33,26 @@ const closeLiveWin = (liveId: string) => {
   ipcRenderer.send('close-live-win', liveId);
 }
 
+const getIMKey = () => {
+  return new Promise((resolve, reject) => {
+    ipcRenderer.once('im-key-reply', function (event, arg) { // 接收到Main进程返回的消息
+      resolve(arg);
+    })
+    ipcRenderer.send('im-key-query');
+  });
+}
+
+const setIMKey = (key: string) => {
+  ipcRenderer.send('set-im-key', key);
+}
+
+
 export {
   testSend,
   getLiveList,
   openLiveById,
   getVideoId,
-  closeLiveWin
+  closeLiveWin,
+  getIMKey,
+  setIMKey
 }

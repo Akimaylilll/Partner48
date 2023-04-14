@@ -4,8 +4,8 @@ import { join, resolve } from 'node:path'
 import { Listeners } from './listeners';
 import log  from 'electron-log';
 import { Tools } from './utils';
-import { Worker } from 'worker_threads';
 import { fork } from 'child_process';
+import Store from 'electron-store';
 
 // The built directory structure
 //
@@ -33,7 +33,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
-Menu.setApplicationMenu(null);
+
 const testPorts = async () =>{
   try {
     const info:any = await Tools.findPort('8936');
@@ -72,7 +72,51 @@ async function createWindow() {
       contextIsolation: false,
       nodeIntegrationInWorker: true
     },
-  })
+  });
+  // console.log(win.isMenuBarVisible())
+
+  const template = Menu.buildFromTemplate([
+    // {
+    //     label: '文件', click: function () {
+    //         console.log('点击事件');
+    //     }
+    // },
+    {
+      label: '设置', submenu: [
+        {
+          label: '令牌', click: function () {
+            const KeyWin = new BrowserWindow({
+              useContentSize: true,
+              height: 200,
+              width: 320,
+              resizable: true,
+              show: true,
+              parent: win,
+              webPreferences: {
+                nodeIntegration: true,
+                // 官网似乎说是默认false，但是这里必须设置contextIsolation
+                contextIsolation: false
+              }
+            });
+            KeyWin.menuBarVisible = false;
+            const url = process.env.VITE_DEV_SERVER_URL;
+            if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
+              KeyWin.loadURL(url + '#/keyInput');
+              // Open devTool if the app is not packaged
+              KeyWin.webContents.openDevTools();
+            } else {
+              KeyWin.loadFile(join(process.env.DIST, 'index.html'), {
+                hash: 'keyInput'
+              });
+              // videoWin.webContents.openDevTools()
+            }
+          }
+        },
+      ]
+    },
+    // {label: '帮助'}
+  ]);
+  Menu.setApplicationMenu(template);
 
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
     win.loadURL(url)
