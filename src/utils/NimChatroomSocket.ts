@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import NIM_SDK from '@yxim/nim-web-sdk/dist/SDK/NIM_Web_SDK.js';
 import type NIM_Web_Chatroom from '@yxim/nim-web-sdk/dist/SDK/NIM_Web_Chatroom';
-import appKey from './sdk/appKey.mjs';
 import type { LiveRoomMessage } from './messageType';
 
 type OnMessage = (t: NimChatroomSocket, event: Array<LiveRoomMessage>) => void | Promise<void>;
@@ -28,7 +27,7 @@ class NimChatroomSocket {
   }
 
   // 初始化
-  init(): void {
+  init(appKey: string): void {
     this.nimChatroomSocket = NIM_SDK.Chatroom.getInstance({
       appKey: atob(appKey),
       chatroomId: this.roomId,

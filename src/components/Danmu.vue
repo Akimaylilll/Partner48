@@ -37,10 +37,10 @@ let timer: any = null;
 onMounted(() => {
   nextTick(() =>{
     setInterval(() => {
+      props.isShow && !props.isScroll && (danmu.value.scrollTop > -1) && (danmu.value.scrollTop = danmu.value.scrollHeight);
       if(!props.isPause) {
         emit('update:nowtime', props.nowtime + 0.2);
       }
-      props.isShow && !props.isScroll && (danmu.value.scrollTop > -1) && (danmu.value.scrollTop = danmu.value.scrollHeight);
     }, 200);
   })
 });
@@ -78,6 +78,14 @@ const spanMouseleave = () => {
 .danmu {
   display:inline-grid;
   overflow-y: scroll;
+  position: absolute !important;
+  z-index: 1;
+  left: 0;
+  bottom: var(--danmu-bottom);
+  width: calc(100% - 5px);
+  background-color: transparent;
+  pointer-events: var(--danmu-pointer-events);
+  max-height: 30%;
 
   &::-webkit-scrollbar {
     width: 5px;
