@@ -63,5 +63,14 @@ export class Listeners {
       const store = new Store();
       store.set('netease-im-key', args[0]);
     });
+
+    ipcMain.on('close-im-key-win', (event, ...args) => {
+      const childWin = win.getChildWindows();
+      childWin.map(item => {
+        if(item.title === "弹幕令牌设置") {
+          item.close();
+        }
+      })
+    });
   }
 }

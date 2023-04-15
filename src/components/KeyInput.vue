@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { getIMKey, setIMKey } from '../renderer/index';
-
+import { getIMKey, setIMKey, closeWin } from '../renderer/index';
+document.title = "弹幕令牌设置";
 const input = ref('');
 getIMKey().then((key: any) => {
   input.value = key;
 })
 const setKey = () =>{
   setIMKey(input.value);
+  closeWin();
 }
 </script>
 
