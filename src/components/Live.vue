@@ -21,6 +21,7 @@ let danmuBottom = ref(0);
 const isDanmuShow = ref(true);
 const isPointerEvents = ref(false);
 const isScroll = ref(false);
+const radian = ref(0);
 let timer: any = null;
 const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
 let room_id = "";
@@ -208,6 +209,24 @@ onMounted(async() => {
       if(dom$){
         createApp(danmu).mount(dom$);
       }
+
+      //插入旋转
+      const console$ = document.querySelector('.dplayer-controller');
+      const child = document.createElement('p');
+      child.innerText = "旋转";
+      child.style.setProperty("float", "right");
+      child.style.setProperty("right", "65px");
+      child.style.setProperty("position", "absolute");
+      child.style.setProperty("bottom", "-5px");
+      child.style.setProperty("cursor", "pointer");
+      child.onclick = () => {
+        radian.value = radian.value + 90;
+        if(radian.value > 360) {
+          radian.value = 0;
+        }
+        videoDiv?.value && videoDiv.value.style.setProperty("--danmu-transform", `${radian.value}deg`);
+      };
+      console$?.appendChild(child);
     }, 2000);
     setInterval(() => {
       if (flvPlayer?.buffered.length && !isPause.value) {
@@ -239,6 +258,7 @@ const clcStyle = computed(() => {
   style["--video-display"] = liveType.value === 1 ? "block" : "none";
   style["--danmu-pointer-events"] = isPointerEvents.value ? 'auto' : 'none';
   style["--danmu-bottom"] = `${danmuBottom.value + 3}px`;
+  style["--danmu-transform"] = `${radian.value}deg`;
   return style;
 });
 
@@ -266,6 +286,7 @@ const danmuScroll = ()=> {
 }
 #myVideo :deep(.dplayer-video-current) {
   display: var(--video-display) !important;
+  transform: rotate(var(--danmu-transform)) !important;
 }
 #myVideo :deep(.dplayer-comment) {
   display: none;
