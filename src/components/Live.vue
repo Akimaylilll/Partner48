@@ -55,7 +55,7 @@ function recordPlaer (src: string) {
       type: 'customHls',
       customType: {
         customHls: function (video: any, player: any) {
-          const hls = new Hls()
+          const hls = new Hls({enableWorker: false})
           hls.loadSource(video.src)
           hls.attachMedia(video)
         }
@@ -70,7 +70,7 @@ function flvPlayerInit (src: string, video: any) {
     type: 'flv',
     url: src
   }, {
-    enableWorker: true,
+    enableWorker: false,
     enableStashBuffer: false,
     autoCleanupSourceBuffer: true,
     stashInitialSize: 128,
@@ -238,7 +238,7 @@ const clcStyle = computed(() => {
   style["width"] = "100% !important";
   style["--video-display"] = liveType.value === 1 ? "block" : "none";
   style["--danmu-pointer-events"] = isPointerEvents.value ? 'auto' : 'none';
-  style["--danmu-bottom"] = `${screenWidth.value + 3}px`;
+  style["--danmu-bottom"] = `${danmuBottom.value + 3}px`;
   return style;
 });
 
