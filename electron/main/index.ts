@@ -91,6 +91,7 @@ async function createWindow() {
               width: 320,
               resizable: true,
               show: true,
+              modal: true,//开启模态父子窗口
               parent: win,
               webPreferences: {
                 nodeIntegration: true,

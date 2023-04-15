@@ -1,4 +1,4 @@
-import { ipcRenderer } from 'electron'
+import { ipcRenderer, } from 'electron'
 const testSend = () => {
   ipcRenderer.send('lives-list', '0');
 }
@@ -46,6 +46,9 @@ const setIMKey = (key: string) => {
   ipcRenderer.send('set-im-key', key);
 }
 
+const closeWin = () => {
+  ipcRenderer.send('close-im-key-win');
+}
 
 export {
   testSend,
@@ -54,5 +57,6 @@ export {
   getVideoId,
   closeLiveWin,
   getIMKey,
-  setIMKey
+  setIMKey,
+  closeWin
 }
