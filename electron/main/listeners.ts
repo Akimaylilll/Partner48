@@ -26,7 +26,7 @@ export class Listeners {
       const video = new VideoWin(win, args[0]);
       // TODO: 待优化
       setTimeout(() => {
-        if(video.videoWin.isDestroyed()){
+        if(!video.videoWin || video.videoWin.isDestroyed()){
           return;
         }
         if(video.videoWin.isVisible()) {
@@ -42,7 +42,7 @@ export class Listeners {
         this.videoWinList.map((item, index) => {
           if(item.liveId == args[0]) {
             log.info("close the liveId:" + args[0]);
-            if(!item.videoWin.isDestroyed()){
+            if(!item.videoWin?.isDestroyed()){
               item.videoWin.close();
             }
             this.videoWinList.splice(index, 1);
