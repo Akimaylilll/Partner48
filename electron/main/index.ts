@@ -73,6 +73,10 @@ async function createWindow() {
       nodeIntegrationInWorker: true
     },
   });
+
+  win.on("closed", () => {
+    app.emit("window-all-closed");
+  });
   // console.log(win.isMenuBarVisible())
 
   const template = Menu.buildFromTemplate([
@@ -121,7 +125,7 @@ async function createWindow() {
               width: 1500,
               resizable: true,
               show: true,
-              parent: win,
+              // parent: win,
               webPreferences: {
                 nodeIntegration: true,
                 // 官网似乎说是默认false，但是这里必须设置contextIsolation
