@@ -50,7 +50,7 @@ export class VideoWin {
       width: this.width,
       resizable: true,
       show: false,
-      parent: this.parentWin,
+      // parent: this.parentWin,
       webPreferences: {
         nodeIntegration: true,
         // 官网似乎说是默认false，但是这里必须设置contextIsolation
