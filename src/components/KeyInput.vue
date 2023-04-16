@@ -7,7 +7,7 @@ getIMKey().then((key: any) => {
   input.value = key;
 })
 const setKey = () =>{
-  setIMKey(input.value);
+  setIMKey(input.value || "");
   closeWin();
 }
 </script>
@@ -16,7 +16,7 @@ const setKey = () =>{
   <div class="box">
     <span>请输入令牌</span>
     <input v-model="input" placeholder="" />
-    <button @click="setKey()">设置</button>
+    <button style="background-color: #1a1a1a; margin-top: 5px; font-size: 13px;" @click="setKey()">设置</button>
   </div>
 </template>
 

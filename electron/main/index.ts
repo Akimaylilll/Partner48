@@ -88,7 +88,7 @@ async function createWindow() {
     {
       label: '设置', submenu: [
         {
-          label: '令牌', click: function () {
+          label: '弹幕令牌', click: function () {
             const KeyWin = new BrowserWindow({
               useContentSize: true,
               height: 200,
