@@ -211,14 +211,15 @@ onMounted(async() => {
       }
 
       //插入旋转
-      const console$ = document.querySelector('.dplayer-controller');
+      const console$ = document.querySelector('.dplayer-setting-origin-panel');
       const child = document.createElement('p');
       child.innerText = "旋转";
-      child.style.setProperty("float", "right");
-      child.style.setProperty("right", "65px");
-      child.style.setProperty("position", "absolute");
-      child.style.setProperty("bottom", "-5px");
-      child.style.setProperty("cursor", "pointer");
+      child.className = "dplayer-setting-item";
+      child.style.setProperty("margin", "0");
+      child.style.setProperty("font-size", "13px");
+      child.style.setProperty("height", "25px");
+      child.style.setProperty("line-height", "25px");
+      child.style.setProperty("padding", "0");
       child.onclick = () => {
         radian.value = radian.value + 90;
         if(radian.value > 360) {
