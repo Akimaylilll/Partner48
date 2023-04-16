@@ -89,7 +89,7 @@ async function createWindow() {
               useContentSize: true,
               height: 200,
               width: 320,
-              resizable: true,
+              resizable: false,
               show: true,
               modal: true,//开启模态父子窗口
               parent: win,
@@ -109,6 +109,33 @@ async function createWindow() {
               KeyWin.loadFile(join(process.env.DIST, 'index.html'), {
                 hash: 'keyInput'
               });
+              // videoWin.webContents.openDevTools()
+            }
+          }
+        },
+        {
+          label: 'NodeMediaServer', click: function () {
+            const MSWin = new BrowserWindow({
+              useContentSize: true,
+              height: 500,
+              width: 1500,
+              resizable: true,
+              show: true,
+              parent: win,
+              webPreferences: {
+                nodeIntegration: true,
+                // 官网似乎说是默认false，但是这里必须设置contextIsolation
+                contextIsolation: false
+              }
+            });
+            MSWin.menuBarVisible = false;
+            const url = process.env.VITE_DEV_SERVER_URL;
+            if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
+              MSWin.loadURL("http://127.0.0.1:8936/admin");
+              // Open devTool if the app is not packaged
+              MSWin.webContents.openDevTools();
+            } else {
+              MSWin.loadURL("http://127.0.0.1:8936/admin");
               // videoWin.webContents.openDevTools()
             }
           }
