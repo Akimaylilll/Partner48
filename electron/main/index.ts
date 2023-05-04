@@ -1,11 +1,7 @@
 import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
 import { release } from 'node:os'
 import { join, resolve } from 'node:path'
-import { Listeners } from './listeners';
-import log  from 'electron-log';
-import { Tools } from './utils';
-import { fork } from 'child_process';
-import Store from 'electron-store';
+import { MainWin } from './win/MainWin'
 
 // The built directory structure
 //
@@ -34,20 +30,6 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0)
 }
 
-const testPorts = async () =>{
-  try {
-    const info:any = await Tools.findPort('8936');
-    await Tools.killPort(info.pId);
-  } catch (e) { }
-  try {
-    const info:any = await Tools.findPort('8935');
-    await Tools.killPort(info.pId);
-  } catch (e) { }
-  try {
-    const info:any = await Tools.findPort('8173');
-    await Tools.killPort(info.pId);
-  } catch (e) { }
-}
 // Remove electron security warnings
 // This warning only shows in development mode
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
@@ -55,150 +37,10 @@ const testPorts = async () =>{
 
 let win: BrowserWindow | null = null
 // Here, you can also use other preload
-const preload = join(__dirname, '../preload/index.js')
-const url = process.env.VITE_DEV_SERVER_URL
-const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
-  win = new BrowserWindow({
-    title: 'Main window',
-    icon: join(process.env.PUBLIC, 'favicon.ico'),
-    webPreferences: {
-      preload,
-      // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
-      // Consider using contextBridge.exposeInMainWorld
-      // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
-      nodeIntegration: true,
-      contextIsolation: false,
-      nodeIntegrationInWorker: true
-    },
-  });
-
-  win.on("closed", () => {
-    app.emit("window-all-closed");
-  });
-  // console.log(win.isMenuBarVisible())
-
-  const template = Menu.buildFromTemplate([
-    // {
-    //     label: '文件', click: function () {
-    //         console.log('点击事件');
-    //     }
-    // },
-    {
-      label: '设置', submenu: [
-        {
-          label: '弹幕令牌', click: function () {
-            const KeyWin = new BrowserWindow({
-              useContentSize: true,
-              height: 200,
-              width: 320,
-              resizable: false,
-              show: true,
-              modal: true,//开启模态父子窗口
-              parent: win,
-              webPreferences: {
-                nodeIntegration: true,
-                // 官网似乎说是默认false，但是这里必须设置contextIsolation
-                contextIsolation: false
-              }
-            });
-            KeyWin.menuBarVisible = false;
-            const url = process.env.VITE_DEV_SERVER_URL;
-            if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
-              KeyWin.loadURL(url + '#/keyInput');
-              // Open devTool if the app is not packaged
-              KeyWin.webContents.openDevTools();
-            } else {
-              KeyWin.loadFile(join(process.env.DIST, 'index.html'), {
-                hash: 'keyInput'
-              });
-              // videoWin.webContents.openDevTools()
-            }
-          }
-        },
-        {
-          label: 'NodeMediaServer', click: function () {
-            const MSWin = new BrowserWindow({
-              useContentSize: true,
-              height: 500,
-              width: 1500,
-              resizable: true,
-              show: true,
-              // parent: win,
-              webPreferences: {
-                nodeIntegration: true,
-                // 官网似乎说是默认false，但是这里必须设置contextIsolation
-                contextIsolation: false
-              }
-            });
-            MSWin.menuBarVisible = false;
-            const url = process.env.VITE_DEV_SERVER_URL;
-            if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
-              MSWin.loadURL("http://127.0.0.1:8936/admin");
-              // Open devTool if the app is not packaged
-              MSWin.webContents.openDevTools();
-            } else {
-              MSWin.loadURL("http://127.0.0.1:8936/admin");
-              // videoWin.webContents.openDevTools()
-            }
-          }
-        },
-      ]
-    },
-    // {label: '帮助'}
-  ]);
-  Menu.setApplicationMenu(template);
-
-  if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
-    win.loadURL(url)
-    // Open devTool if the app is not packaged
-    win.webContents.openDevTools()
-  } else {
-    win.loadFile(indexHtml)
-  }
-
-  testPorts();
-  //测试
-  new Listeners(win);
-  runMediaServer();
-  runDanmuServer();
-  // Test actively push message to the Electron-Renderer
-  win.webContents.on('did-finish-load', () => {
-    win?.webContents.send('main-process-message', new Date().toLocaleString())
-  })
-
-  // Make all links open with the browser, not with the application
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:')) shell.openExternal(url)
-    return { action: 'deny' }
-  })
-}
-
-function runMediaServer() {
-  const tsFile = resolve(join(__dirname, 'worker',`MediaServer.js`)).replace(/\\/g, '/');
-  const worker = fork(tsFile, {
-    silent: true
-  });
-  worker.stdout.on('data', (result) => {
-    log.info(Buffer.from(result).toString());
-  });
-  worker.stderr.on('data', (result) => {
-    log.error(Buffer.from(result).toString());
-  });
-}
-
-function runDanmuServer() {
-  const danmuServerFile = resolve(join(__dirname, 'worker', `DanmuServer.js`)).replace(/\\/g, '/');;
-  const danmuServer = fork(danmuServerFile, {
-    silent: true
-  });
-  danmuServer.stdout.on('data', (result) => {
-    log.info(Buffer.from(result).toString());
-  });
-  danmuServer.stderr.on('data', (result) => {
-    log.error(Buffer.from(result).toString());
-  });
+  const mainWin = new MainWin();
+  win = mainWin.getWin();
 }
 
 app.whenReady().then(createWindow)
@@ -226,18 +68,18 @@ app.on('activate', () => {
 })
 
 // New window example arg: new windows url
-ipcMain.handle('open-win', (_, arg) => {
-  const childWindow = new BrowserWindow({
-    webPreferences: {
-      preload,
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  })
+// ipcMain.handle('open-win', (_, arg) => {
+//   const childWindow = new BrowserWindow({
+//     webPreferences: {
+//       preload,
+//       nodeIntegration: true,
+//       contextIsolation: false,
+//     },
+//   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
-    childWindow.loadURL(`${url}#${arg}`)
-  } else {
-    childWindow.loadFile(indexHtml, { hash: arg })
-  }
-})
+//   if (process.env.VITE_DEV_SERVER_URL) {
+//     childWindow.loadURL(`${url}#${arg}`)
+//   } else {
+//     childWindow.loadFile(indexHtml, { hash: arg })
+//   }
+// })
