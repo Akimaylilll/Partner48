@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron'
 import { Pocket } from './pocket/pocket';
-import { VideoWin } from './win/video';
+import { VideoWin } from './win/VideoWin';
 import log  from 'electron-log';
 import Store from 'electron-store';
 

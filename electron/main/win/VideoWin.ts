@@ -1,4 +1,4 @@
-import { app, BrowserWindow, UtilityProcess } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { Pocket } from '../pocket/pocket';
 import { join, basename, dirname, resolve } from 'node:path';
 import { readFileSync, rmSync, existsSync } from 'fs';
