@@ -23,7 +23,7 @@ export class Listeners {
     });
 
     ipcMain.on('open-live-query', (event, ...args) => {
-      const video = new VideoWin(win, args[0]);
+      const video = new VideoWin(args[0]);
       // TODO: 待优化
       setTimeout(() => {
         if(!video.videoWin || video.videoWin.isDestroyed()){

@@ -12,7 +12,6 @@ export class VideoWin {
   public liveId: string = null;
   private liveType: number = 1;
   private liveUser: string = null;
-  private parentWin: BrowserWindow = null;
   private height: number = 620;
   private width: number = 320;
   public videoWin: BrowserWindow = null;
@@ -20,9 +19,8 @@ export class VideoWin {
   private roomId: string = "";
   private ffmpegServer: any = null;
 
-  public constructor(parentWin: BrowserWindow, liveId: string) {
+  public constructor(liveId: string) {
     this.liveId = liveId;
-    this.parentWin = parentWin;
     const pocket: Pocket = new Pocket();
     pocket.getOneLiveById(liveId).then(async (content) => {
       this.source = content.playStreamPath;
@@ -50,7 +48,6 @@ export class VideoWin {
       width: this.width,
       resizable: true,
       show: false,
-      // parent: this.parentWin,
       webPreferences: {
         nodeIntegration: true,
         // 官网似乎说是默认false，但是这里必须设置contextIsolation
