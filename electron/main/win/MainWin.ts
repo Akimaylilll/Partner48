@@ -90,29 +90,30 @@ export class MainWin {
     } catch (e) { }
   }
 
-  runMediaServer() {
-    const tsFile = resolve(join(__dirname, 'worker',`MediaServer.js`)).replace(/\\/g, '/');
-    const worker = fork(tsFile, {
+  forkChild(tsFile) {
+    const child = fork(tsFile, {
       silent: true
     });
-    worker.stdout.on('data', (result) => {
+    child.stdout.on('data', (result) => {
       log.info(Buffer.from(result).toString());
     });
-    worker.stderr.on('data', (result) => {
+    child.stderr.on('data', (result) => {
       log.error(Buffer.from(result).toString());
+    });
+    child.on('exit', () => {
+      setTimeout(() => {
+        this.forkChild(tsFile);
+      }, 1000);
     });
   }
-  
+
+  runMediaServer() {
+    const mediaServerFile = resolve(join(__dirname, 'worker',`MediaServer.js`)).replace(/\\/g, '/');
+    this.forkChild(mediaServerFile);
+  }
+
   runDanmuServer() {
     const danmuServerFile = resolve(join(__dirname, 'worker', `DanmuServer.js`)).replace(/\\/g, '/');;
-    const danmuServer = fork(danmuServerFile, {
-      silent: true
-    });
-    danmuServer.stdout.on('data', (result) => {
-      log.info(Buffer.from(result).toString());
-    });
-    danmuServer.stderr.on('data', (result) => {
-      log.error(Buffer.from(result).toString());
-    });
+    this.forkChild(danmuServerFile);
   }
 }
