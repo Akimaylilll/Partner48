@@ -29,13 +29,13 @@ export class MainWin {
     this.win.on("closed", () => {
       app.emit("window-all-closed");
     });
-  
+    const _that = this;
     const template = Menu.buildFromTemplate([
       {
         label: '设置', submenu: [
           {
             label: '弹幕令牌', click: function () {
-              new KeyWin(this.win);
+              new KeyWin(_that.win);
             }
           },
           {
