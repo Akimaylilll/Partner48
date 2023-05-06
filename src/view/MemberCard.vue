@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { getLiveList, openLiveById } from '../renderer/index';
+import { openLive } from '../live/Member';
 defineProps<{ msg: string }>()
 
 let liveList: any = ref([]);
@@ -52,12 +53,7 @@ watch(showTopLoading, (newVal) => {
   }
 })
 
-const openLive = (liveId: string) => {
-  openLiveById(liveId).then((value) => {
-    // console.log('success')
-    // console.log(value);
-  })
-};
+
 
 const handleScroll = async (e: any) =>{
   const {scrollTop, clientHeight, scrollHeight} = e.target.childNodes[1];
@@ -112,7 +108,7 @@ const reSetReplayDict = (list: Array<any>) => {
 </script>
 
 <template>
-  <div v-if="showTopLoading" class="top-mask">
+  <div v-if="showTopLoading">
     <img src="../img/loading.gif" style="width: 20px;">
   </div>
   <div @scroll.prevent="handleScroll" style="width:100%; height: 100%;">
