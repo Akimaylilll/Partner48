@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { getLiveList, openLiveById } from '../renderer/index';
-import { openLive } from '../live/Member';
+import { ref, onMounted, watch } from 'vue';
+import { openLive, reSetReplayDict, getLiveMember, getReplayMember, initMember } from '../live/Member';
+import { debounce } from '../utils/index'
 defineProps<{ msg: string }>()
 
 let liveList: any = ref([]);
@@ -16,34 +16,14 @@ let next = "0";
 let _isLive = true;
 
 onMounted(() => {
-  window.addEventListener('scroll', handleScroll, true)
-  initLive()
-});
-
-const initLive = () => {
-  showTopLoading.value = true;
-  liveList.value = [];
-  replayList.value = [];
-  replayDict.value = {};
-  next = "0";
-  getLiveList(true, next).then(value => {
-    setTimeout(() => {
-      showTopLoading.value = false;
-    }, 1000);
-    liveList.value = (value as any).liveList;
-    if(replayList.value.length > 0){
-      next = (liveList.value?.at(-1) as any).liveId || next;
-    } else {
-      setTimeout(() => {
-        getLiveList(false, next).then( list => {
-          replayList.value = (list as any).liveList;
-          next = (replayList.value?.at(-1) as any)?.liveId || next;
-          reSetReplayDict(replayList.value);
-        });
-      }, 800);
-    }
+  window.addEventListener('scroll', handleScroll, true);
+  initMember().then((data: any) => {
+    liveList.value = data.liveList;
+    replayList.value = data.replayList;
+    next = data.next;
+    showTopLoading.value = false;
   });
-}
+});
 
 watch(showTopLoading, (newVal) => {
   if(newVal) {
@@ -51,58 +31,59 @@ watch(showTopLoading, (newVal) => {
   } else {
     document.body.style.overflowY = 'auto';
   }
-})
+});
 
-
+watch(replayList, (newVal: any[]) => {
+  replayDict.value = reSetReplayDict(newVal);
+});
 
 const handleScroll = async (e: any) =>{
   const {scrollTop, clientHeight, scrollHeight} = e.target.childNodes[1];
   if(scrollTop === 0) {
     e.target.childNodes[1].scrollTop = 1;
-    initLive();
+    showTopLoading.value = true;
+    replayList.value = [];
+    liveList.value = [];
+    initMember().then((data: any) => {
+      liveList.value = data.liveList;
+      replayList.value = data.replayList;
+      next = data.next;
+      showTopLoading.value = false;
+    });
     return;
   }
   //滚动条未触底
-  if (scrollTop + clientHeight < scrollHeight - 1){
+  if (scrollTop + clientHeight < scrollHeight - 1) {
     return;
   }
+
   showBottomLoading.value = true;
-  if(_isLive){
-    const result = await getLiveList(_isLive, next) as any;
-    const newList = result.liveList;
-    if(newList.length > 0 && newList.at(-1).liveId !== (liveList.value.at(-1) as any)?.liveId){
-      liveList.value = [...liveList.value,...newList as []]
-      next = (liveList.value?.at(-1) as any).liveId || next;
-    } else {
-      _isLive = false;
-      recordShow.value = true;
-    }
+  if(_isLive) {
+    const endId = (liveList.value.at(-1) as any)?.liveId;
+    getLiveMember(liveList.value, next).then((data: any) => {
+      if(!(liveList.value.length > 0 && liveList.value.at(-1).liveId !== endId)){
+        _isLive = false;
+        recordShow.value = true;
+        setTimeout(()=>{
+          getReplayMember(replayList.value, next).then((data: any) => {
+            replayList.value = data.list;
+            next = data.next;
+            showBottomLoading.value = false;
+          });
+        }, 800);
+      } else {
+        liveList.value = data.list;
+        next = data.next;
+        showBottomLoading.value = false;
+      }
+    });
+  } else {
+    getReplayMember(replayList.value, next).then((data: any) => {
+      replayList.value = data.list;
+      next = data.next;
+      showBottomLoading.value = false;
+    });
   }
-
-  if(! _isLive) {
-    const result = await getLiveList(_isLive, next) as any;
-    const newList = result.liveList;
-    replayList.value = Array.from(new Set([...replayList.value, ...newList as []]));
-    next = (replayList.value?.at(-1) as any)?.liveId || next;
-    reSetReplayDict(replayList.value);
-  }
-  setTimeout(() => {
-    showBottomLoading.value = false;
-  }, 2000);
-};
-
-const reSetReplayDict = (list: Array<any>) => {
-  replayDict.value = {};
-  list.map((item: any) => {
-    const date = new Date(Number(item?.ctime));
-    const dateStr = date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate();
-    if (replayDict.value[dateStr]) {
-      replayDict.value[dateStr].push(item);
-    } else {
-      replayDict.value[dateStr] = [];
-      replayDict.value[dateStr].push(item);
-    }
-  })
 };
 
 </script>
@@ -111,7 +92,7 @@ const reSetReplayDict = (list: Array<any>) => {
   <div v-if="showTopLoading">
     <img src="../img/loading.gif" style="width: 20px;">
   </div>
-  <div @scroll.prevent="handleScroll" style="width:100%; height: 100%;">
+  <div @scroll.prevent="debounce(handleScroll)" style="width:100%; height: 100%;">
     <div style="width: 100%">直播</div>
       <div v-masonry gutter="10" itemSelector=".grid-item" :fitWidth= "true" :v-if="show" class="grid">
       <div v-masonry-tile class="grid-item" v-for="(o,index) in liveList" :key="index">

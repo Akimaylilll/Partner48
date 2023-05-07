@@ -51,7 +51,9 @@ export class MainWin {
     if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
       this.win.loadURL(url)
       // Open devTool if the app is not packaged
-      this.win.webContents.openDevTools()
+      setTimeout(()=>{
+        this.win.webContents.openDevTools()
+      }, 5000)
     } else {
       this.win.loadFile(indexHtml)
     }
