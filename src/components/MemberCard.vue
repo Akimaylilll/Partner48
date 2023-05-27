@@ -1,6 +1,7 @@
 
 <script setup lang="ts">
 import { openLiveById } from '../renderer/index';
+import { ElCard } from 'element-plus';
 interface LiveList{
   liveId: string,
   title: string,
