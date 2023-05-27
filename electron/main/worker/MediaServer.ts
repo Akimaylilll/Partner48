@@ -1,5 +1,7 @@
 
-import NodeMediaServer from 'node-media-server'
+import NodeMediaServer from 'node-media-server';
+
+const numCPUs = require('os').cpus().length;
 
 const config = {
   rtmp: {
@@ -12,7 +14,10 @@ const config = {
   http: {
       port: 8936,
       allow_origin: '*',
+  },
+  cluster: {
+    num: (numCPUs / 2) || 1
   }
 };
-var nms = new NodeMediaServer(config)
+var nms = new NodeMediaServer(config);
 nms.run();
