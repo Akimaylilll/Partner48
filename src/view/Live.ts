@@ -206,7 +206,6 @@ function livePlayer (src: string) {
         if (flvPlayer?.buffered.length) {
           let end = flvPlayer.buffered.end(0);//获取当前buffered值
           let diff = end - flvPlayer.currentTime;//获取buffered与currentTime的差值
-          console.log(diff);
           if (diff >= 0.5) {//如果差值大于等于0.5 手动跳帧 这里可根据自身需求来定
             flvPlayer.currentTime = flvPlayer.buffered.end(0) - 1.5;//手动跳帧
           }

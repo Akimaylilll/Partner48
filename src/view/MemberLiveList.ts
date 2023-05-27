@@ -85,8 +85,8 @@ export const memberCard = () => {
       returnRef.replayList = [];
       returnRef.liveList = [];
       initMember().then((data: any) => {
-        returnRef.liveList = data.liveList;
-        returnRef.replayList = data.replayList;
+        returnRef.liveList = data.liveList || [];
+        returnRef.replayList = data.replayList || [];
         next = data.next;
         returnRef.showTopLoading = false;
       });
