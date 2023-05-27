@@ -2,7 +2,7 @@
 import { onMounted, reactive } from 'vue';
 import { getLiveList, openLiveById } from '../renderer/index';
 
-interface myProps {
+interface MemberLiveProps {
   liveList?: any,
   replayList?: any,
   replayDict?: any,
@@ -54,7 +54,7 @@ const initMember = () => {
   });
 }
 export const memberCard = () => {
-  const returnRef: myProps = reactive({});
+  const returnRef: MemberLiveProps = reactive({});
   returnRef.liveList = [];
   returnRef.replayList = [];
   returnRef.replayDict = {};
@@ -70,8 +70,8 @@ export const memberCard = () => {
   onMounted(() => {
     window.addEventListener('scroll', handleScroll, true);
     initMember().then((data: any) => {
-      returnRef.liveList = data.liveList;
-      returnRef.replayList = data.replayList;
+      returnRef.liveList = data.liveList || [];
+      returnRef.replayList = data.replayList || [];
       next = data.next;
       returnRef.showTopLoading = false;
     });
