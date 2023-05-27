@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { toRefs, watch } from 'vue';
+import { toRefs, watch, reactive } from 'vue';
 import { memberCard, reSetReplayDict } from './MemberLiveList';
 import { debounce } from '../utils/index';
 import MemberCard from "../components/MemberCard.vue";
-const { returnRef, handleScroll } = toRefs(memberCard());
+const props = reactive(memberCard());
+const { returnRef, handleScroll } = toRefs(props);
 watch(() => returnRef.value.showTopLoading, (newVal) => {
   if(newVal) {
     document.body.style.overflowY = 'scroll';
