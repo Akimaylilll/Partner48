@@ -1,14 +1,23 @@
 <script setup lang="ts">
 
-import { ref, onMounted, computed, watch, toRefs } from 'vue';
-import NimChatroomSocket from '../utils/NimChatroomSocket';
-import { initLive } from './Live'
-const emit = defineEmits([ 'update:isPointerEvents', 'update:now_time']);
-const { props } = toRefs(initLive());
-const isPointerEvents = ref(false);
-const radian = ref(0);
-const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+import { ref, onMounted, computed, watch, toRefs, createApp, h, reactive } from 'vue';
+import Danmu from "../components/Danmu.vue";
+import { initLive } from './Live';
+const { props } = toRefs(reactive(initLive()));
+const videoDiv = ref<any>(null);
 
+const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
+const emit = defineEmits([ 'update:isPointerEvents', 'update:now_time']);
+let timer: any = null;
+
+const danmuScroll = ()=> {
+  props.value.isPointerEvents = true;
+  props.value.isScroll = true;
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    props.value.isScroll = false;
+  }, 5000);
+}
 
 onMounted(async() => {
   window.onresize = () => {
@@ -16,6 +25,37 @@ onMounted(async() => {
       screenWidth.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
     })();
   }
+  setTimeout(() => {
+    const danmu = {
+      render() {
+        return h(Danmu, {
+          danmuData: props.value.danmuData,
+          isPause: props.value.isPause,
+          isLive: props.value.isLive,
+          isShow: props.value.isDanmuShow,
+          isScroll: props.value.isScroll,
+          isPointerEvents: props.value.isPointerEvents,
+          "onUpdate:isPointerEvents": (value: boolean) => props.value.isPointerEvents = value,
+          nowtime: props.value.now_time,
+          "onUpdate:nowtime": (value: number) => props.value.now_time = value,
+          onScroll: () => danmuScroll()
+        });
+      }
+    }
+    const dom$ = document.querySelector('.dplayer-menu');
+    if(dom$){
+      createApp(danmu).mount(dom$);
+    };
+    //dplayer-controller
+    setTimeout(() => {
+      Object.keys(videoDiv.value.childNodes).map(index => {
+        const item = videoDiv.value.childNodes[index];
+        if(item.className === "dplayer-controller") {
+          props.value.danmuBottom = item.clientHeight;
+        }
+      });
+    }, 2000);
+  }, 2000);
 });
 
 watch(screenWidth, (newVal) => {
