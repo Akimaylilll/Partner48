@@ -2,8 +2,8 @@ import DPlayer, { DPlayerEvents } from 'dplayer';
 import { closeLiveWin, getIMKey } from '../renderer/index';
 import { DANMAKU_ID, DANMAKU_API, LIVE_PORT, LIVE_HOST } from '../config/index';
 import { ipcRenderer } from 'electron';
-import Danmu from "../components/Danmu.vue";
-import { createApp, h, reactive, ref, onMounted, nextTick } from 'vue';
+import NimChatroomSocket from '../utils/NimChatroomSocket';
+import { reactive, onMounted, nextTick } from 'vue';
 import flvjs from 'flv.js';
 import Hls from 'hls.js';
 
@@ -23,7 +23,6 @@ interface LiveProps {
   danmuBottom?: number
 }
 const initLive = () => {
-  let timer: any = null;
   const props: LiveProps = reactive({});
   props.videoDiv = null;
   props.videoId = '';
@@ -33,18 +32,20 @@ const initLive = () => {
   props.isLive = true;
   props.radian = 0;
   props.danmuBottom = 0;
+  props.now_time = 0;
+  props.danmuData = [];
 
   ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, danmus, roomId) { // 接收到Main进程返回的消息
     props.videoId = arg;
     props.liveType = type;
     props.danmuData = danmus;
     document.title = userName;
-    props.roomId = roomId;
+    // props.roomId = roomId;
     if(source.indexOf('.m3u8') > -1){
       props.isLive = false;
     }
     setTimeout(async () => {
-      const dp = initVideoPlayer(source, props.videoId || '', props.liveType === 1);
+      const dp = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive);
       dp.on('pause' as DPlayerEvents, function() {
         props.isPause = true;
       });
@@ -52,7 +53,6 @@ const initLive = () => {
         props.isPause = false;
       });
       dp.on('playing' as DPlayerEvents, function() {
-        console.log(dp.video.currentTime);
         props.now_time = dp.video.currentTime;
       });
       dp.on('danmaku_show' as DPlayerEvents,function() {
@@ -61,34 +61,21 @@ const initLive = () => {
       dp.on('danmaku_hide' as DPlayerEvents,function() {
         props.isDanmuShow = false;
       });
+      getIMKey().then(value => {
+        if(roomId) {
+            const danmu = new NimChatroomSocket({
+              roomId: roomId,
+              onMessage: handleNewMessage
+            });
+            danmu.init(value as string);
+          }
+      });
     }, 1000);
   });
-
-  const danmuScroll = ()=> {
-    props.isPointerEvents = true;
-    props.isScroll = true;
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      props.isScroll = false;
-    }, 5000);
-  }
 
   onMounted(async() => {
     nextTick(() => {
       setTimeout(() =>{
-        initDanmu({
-          danmuData: props.danmuData,
-          isPause: props.isPause,
-          isLive: props.isLive,
-          isShow: props.isDanmuShow,
-          isScroll: props.isScroll,
-          isPointerEvents: props.isPointerEvents,
-          "onUpdate:isPointerEvents": (value: boolean) => props.isPointerEvents = value,
-          nowtime: props.now_time,
-          "onUpdate:nowtime": (value: number) => props.now_time = value,
-          onScroll: () => danmuScroll()
-        });
-
         const rotationButton = insertRotationButton();
         rotationButton.onclick = () => {
           props.radian = props.radian ? props.radian + 90 : 90;
@@ -100,6 +87,18 @@ const initLive = () => {
       }, 2000);
     })
   });
+
+  function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
+    for (const item of event) {
+      if(item.type === "text") {
+        const custom = JSON.parse(item.custom);
+        if(!props.danmuData) {
+          props.danmuData = [];
+        }
+        props.danmuData.push([0, 0, 16777215, custom.user.nickName, item.text] as never)
+      }
+    }
+  }
 
   return { props }
 }
@@ -122,44 +121,8 @@ const initVideoPlayer = (source: string, videoId: string, isLive: boolean): DPla
   });
   dp.fullScreen.request('web');
   dp.play();
-
-  //dplayer-controller
-  // Object.keys(videoDiv.value.childNodes).map(index => {
-  //   const item = videoDiv.value.childNodes[index];
-  //   if(item.className === "dplayer-controller") {
-  //     danmuBottom.value = item.clientHeight;
-  //   }
-  // });
-  // const appKey = (await getIMKey()) as string;
-  // if(room_id) {
-  //   const danmu = new NimChatroomSocket({
-  //     roomId: room_id,
-  //     onMessage: handleNewMessage
-  //   });
-  //   danmu.init(appKey);
-  // }
-  // getIMKey().then(value => {
-  //   if(roomId) {
-  //       const danmu = new NimChatroomSocket({
-  //         roomId: roomId,
-  //         onMessage: handleNewMessage
-  //       });
-  //       danmu.init(value as string);
-  //     }
-  // });
   return dp;
 }
-
-// function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
-//   for (const item of event) {
-//     // console.log(item);
-//     if(item.type === "text") {
-//       const custom = JSON.parse(item.custom);
-//       // console.log(custom);
-//       danmuData.value.push([0, 0, 16777215, custom.user.nickName, item.text] as never)
-//     }
-//   }
-// }
 
 function livePlayer (src: string) {
   let flvPlayer: flvjs.Player | null = null;
@@ -266,19 +229,7 @@ const insertRotationButton = () => {
   child.style.setProperty("line-height", "25px");
   child.style.setProperty("padding", "0");
   console$?.appendChild(child);
-  return child
-}
-
-const initDanmu = ( item: any ) => {
-  const danmu = {
-    render() {
-      return h(Danmu, item);
-    }
-  }
-  const dom$ = document.querySelector('.dplayer-menu');
-  if(dom$){
-    createApp(danmu).mount(dom$);
-  };
+  return child;
 }
 
 export {
