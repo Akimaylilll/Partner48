@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, onMounted, nextTick, watch } from 'vue';
 const props = defineProps({
 	nowtime: {
 		type: Number,
@@ -31,19 +31,34 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update:nowtime', 'update:isPointerEvents']);
+const emit = defineEmits(['update:nowtime', 'update:isPointerEvents', 'update:isScroll']);
 const danmu = ref<any>(null);
 let timer: any = null;
 onMounted(() => {
   nextTick(() =>{
     setInterval(() => {
-      props.isShow && !props.isScroll && (danmu.value.scrollTop > -1) && (danmu.value.scrollTop = danmu.value.scrollHeight);
       if(!props.isPause) {
         emit('update:nowtime', props.nowtime + 0.2);
       }
     }, 200);
   })
 });
+
+watch(() => props.isLive ? props.danmuData : props.danmuData.filter(item => {return item[0] < props.nowtime;}), (newVal) => {
+  if(danmu.value?.scrollTop > -1 && props.isShow && !props.isScroll) {
+      setTimeout(() => {
+        danmu.value.scrollTop = danmu.value?.scrollHeight;
+        setTimeout(() => {
+          emit('update:isScroll', false);
+        }, 20);
+      }, 10);
+    }
+  }, {
+    immediate: true,
+    deep: true
+  }
+);
+
 const spanMousemove = () => {
   emit("update:isPointerEvents", true);
 }
