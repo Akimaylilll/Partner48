@@ -20,7 +20,7 @@ watch(() => returnRef.value.replayList, (newVal: any[]) => {
 
 <template>
   <div v-if="returnRef.showTopLoading">
-    <img src="../img/loading.gif" style="width: 20px;">
+    <img src="../img/loading.svg" style="width: 100px;">
   </div>
   <div @scroll.prevent="debounce(handleScroll)" style="width:100%; height: 100%;">
     <div style="width: 100%">直播</div>
@@ -36,7 +36,7 @@ watch(() => returnRef.value.replayList, (newVal: any[]) => {
       </div>
   </div>
   <div v-if="returnRef.showBottomLoading" >
-    <img src="../img/loading.gif" style="width: 20px;">
+    <img src="../img/loading.svg" style="width: 100px;">
   </div>
 </template>
 
