@@ -88,5 +88,9 @@ export class Listeners {
         event.reply('detect-version-reply', {version, latest_version});
       });
     });
+
+    ipcMain.on('main-message-alert', (event, ...args) => {
+      win.webContents.send('main-message-alert-reply', args[0]);
+    });
   }
 }

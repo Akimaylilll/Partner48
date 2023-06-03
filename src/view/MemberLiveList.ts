@@ -1,6 +1,6 @@
 
 import { onMounted, reactive } from 'vue';
-import { getLiveList, getVersion } from '../renderer/index';
+import { getLiveList, getVersion, addAlertMessageListener } from '../renderer/index';
 
 interface MemberLiveProps {
   liveList?: any,
@@ -69,6 +69,7 @@ export const memberCard = () => {
 
   onMounted(() => {
     window.addEventListener('scroll', handleScroll, true);
+    addAlertMessageListener();
     initMember().then((data: any) => {
       returnRef.liveList = data.liveList || [];
       returnRef.replayList = data.replayList || [];

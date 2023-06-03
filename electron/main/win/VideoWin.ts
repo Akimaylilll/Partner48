@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { Pocket } from '../pocket/pocket';
 import { join, basename, dirname, resolve } from 'node:path';
 import { readFileSync, rmSync, existsSync } from 'fs';
@@ -24,6 +24,10 @@ export class VideoWin {
     this.liveId = liveId;
     const pocket: Pocket = new Pocket();
     pocket.getOneLiveById(liveId).then(async (content) => {
+      if(!content) {
+        ipcMain.emit("main-message-alert", true, "该直播已关闭或不存在");
+        return;
+      }
       this.source = content.playStreamPath;
       this.liveUser = content.user.userName;
       this.liveType = content.liveType;
