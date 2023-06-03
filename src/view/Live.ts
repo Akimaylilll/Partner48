@@ -99,7 +99,7 @@ const initLive = () => {
         if(!props.danmuData) {
           props.danmuData = [];
         }
-        props.danmuData.push([0, 0, 16777215, custom.user.nickName, item.text] as never)
+        props.danmuData.push([0, 0, 16777215, custom.user?.nickName || "", item.text] as never)
       }
     }
   }

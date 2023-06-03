@@ -7,7 +7,6 @@ const { props } = toRefs(reactive(initLive()));
 const videoDiv = ref<any>(null);
 
 const screenWidth = ref(window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth);
-const emit = defineEmits([ 'update:isPointerEvents', 'update:now_time']);
 let timer: any = null;
 
 const danmuScroll = ()=> {
@@ -38,6 +37,7 @@ onMounted(async() => {
           "onUpdate:isPointerEvents": (value: boolean) => props.value.isPointerEvents = value,
           nowtime: props.value.now_time,
           "onUpdate:nowtime": (value: number) => props.value.now_time = value,
+          "onUpdate:isScroll": (value: boolean) => props.value.isScroll = value,
           onScroll: () => danmuScroll()
         });
       }
