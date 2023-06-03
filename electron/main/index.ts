@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 import { MainWin } from './win/MainWin';
@@ -58,15 +58,6 @@ app.on('second-instance', () => {
     win.focus()
   }
 })
-
-app.on('activate', () => {
-  const allWindows = BrowserWindow.getAllWindows()
-  if (allWindows.length) {
-    allWindows[0].focus()
-  } else {
-    createWindow()
-  }
-});
 
 app.on('gpu-process-crashed', (event, kill) => {
   log.warn('app:gpu-process-crashed', event, kill);
