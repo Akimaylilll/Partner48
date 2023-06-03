@@ -1,6 +1,6 @@
 import Koa from "koa";
 import bodyParser from "koa-body";
-const port: number = 8173;
+const port = process.argv[2] || 8173;
 
 const app:Koa = new Koa();
 

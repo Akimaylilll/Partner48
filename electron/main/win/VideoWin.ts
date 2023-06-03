@@ -7,6 +7,7 @@ import { fork } from 'child_process';
 
 import log  from 'electron-log';
 import { Tools } from '../utils';
+import Store from 'electron-store';
 export class VideoWin {
   public source: string = null;
   public liveId: string = null;
@@ -29,7 +30,8 @@ export class VideoWin {
       if(this.source.indexOf('.m3u8') === -1){
         this.roomId = content.roomId;
         try{
-          this.runFfmpegServer(this.source, this.liveId.toString(), "localhost", "8935");
+          const port = (new Store()).get("MEDIA_SERVER_RTMP_PORT");
+          this.runFfmpegServer(this.source, this.liveId.toString(), "localhost", port || "8935");
         }
         catch(e){
           log.error(e);

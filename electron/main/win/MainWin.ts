@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
+import { app, BrowserWindow, shell, Menu } from 'electron'
 import { join, resolve } from 'node:path'
 import { NodeMediaWin } from './NodeMediaWin';
 import { KeyWin } from './KeyWin';
@@ -6,6 +6,9 @@ import { Tools } from '../utils';
 import { Listeners } from '../listeners';
 import log  from 'electron-log';
 import { fork } from 'child_process';
+import { getPort } from "portfinder";
+import { MEDIA_SERVER_RTMP_PORT, LIVE_PORT, DANMAKU_PORT } from "../config/index";
+import Store from 'electron-store';
 export class MainWin {
   private win: BrowserWindow | null = null;
   public constructor() {
@@ -51,18 +54,23 @@ export class MainWin {
     if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
       this.win.loadURL(url)
       // Open devTool if the app is not packaged
-      setTimeout(()=>{
-        this.win.webContents.openDevTools()
-      }, 5000)
+      this.win.webContents.openDevTools()
     } else {
       this.win.loadFile(indexHtml)
     }
   
-    this.testPorts();
-    //测试
+    //IPC
     new Listeners(this.win);
-    this.runMediaServer();
-    this.runDanmuServer();
+    this.runServerAndGetPort().then(data => {
+      if(typeof data !== 'object') {
+        return;
+      }
+      const store = new Store();
+      Object.keys(data).forEach(item => {
+        store.set(item, data[item]);
+      });
+    });
+    
     // Test actively push message to the Electron-Renderer
     this.win.webContents.on('did-finish-load', () => {
       this.win?.webContents.send('main-process-message', new Date().toLocaleString())
@@ -80,20 +88,23 @@ export class MainWin {
   async testPorts() {
     try {
       const info:any = await Tools.findPort('8936');
-      await Tools.killPort(info.pId);
+      const result = await Tools.killPort(info.pId);
+      log.info(Buffer.from(result as Buffer).toString());
     } catch (e) { }
     try {
       const info:any = await Tools.findPort('8935');
-      await Tools.killPort(info.pId);
+      const result = await Tools.killPort(info.pId);
+      log.info(Buffer.from(result as Buffer).toString());
     } catch (e) { }
     try {
       const info:any = await Tools.findPort('8173');
-      await Tools.killPort(info.pId);
+      const result = await Tools.killPort(info.pId);
+      log.info(Buffer.from(result as Buffer).toString());
     } catch (e) { }
   }
 
-  forkChild(tsFile) {
-    const child = fork(tsFile, {
+  forkChild(tsFile, argvs) {
+    const child = fork(tsFile, argvs, {
       silent: true
     });
     child.stdout.on('data', (result) => {
@@ -104,18 +115,46 @@ export class MainWin {
     });
     child.on('exit', () => {
       setTimeout(() => {
-        this.forkChild(tsFile);
+        this.forkChild(tsFile, argvs);
       }, 1000);
     });
   }
 
-  runMediaServer() {
+  runMediaServer(rtmp_port, http_port) {
     const mediaServerFile = resolve(join(__dirname, 'worker',`MediaServer.js`)).replace(/\\/g, '/');
-    this.forkChild(mediaServerFile);
+    this.forkChild(mediaServerFile, [rtmp_port, http_port]);
   }
 
-  runDanmuServer() {
+  runDanmuServer(port) {
     const danmuServerFile = resolve(join(__dirname, 'worker', `DanmuServer.js`)).replace(/\\/g, '/');;
-    this.forkChild(danmuServerFile);
+    this.forkChild(danmuServerFile, [port]);
+  }
+
+  runServerAndGetPort() {
+    const _that = this;
+    return new Promise(function(res, rej) {
+      const object = {
+        "MEDIA_SERVER_RTMP_PORT": MEDIA_SERVER_RTMP_PORT,
+        "LIVE_PORT": LIVE_PORT,
+        "DANMAKU_PORT": DANMAKU_PORT
+      };
+      Promise.all(Object.keys(object).map(item => {
+        return new Promise(function(resolve, reject){
+          getPort({port: MEDIA_SERVER_RTMP_PORT} , function(err, port){
+            if(err) {
+              reject(err);
+            }
+            object[item] = port;
+            resolve(object);
+          });
+        });
+      })).then(() => {
+        _that.runMediaServer(object["MEDIA_SERVER_RTMP_PORT"], object["LIVE_PORT"]);
+        _that.runDanmuServer(object["DANMAKU_PORT"]);
+        res(object);
+      }).catch(err => {
+        rej(err);
+      })
+    });
   }
 }

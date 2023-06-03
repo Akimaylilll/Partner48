@@ -1,7 +1,8 @@
 import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
 import { release } from 'node:os'
-import { join, resolve } from 'node:path'
-import { MainWin } from './win/MainWin'
+import { join } from 'node:path'
+import { MainWin } from './win/MainWin';
+import log  from 'electron-log';
 
 // The built directory structure
 //
@@ -65,21 +66,20 @@ app.on('activate', () => {
   } else {
     createWindow()
   }
-})
+});
 
-// New window example arg: new windows url
-// ipcMain.handle('open-win', (_, arg) => {
-//   const childWindow = new BrowserWindow({
-//     webPreferences: {
-//       preload,
-//       nodeIntegration: true,
-//       contextIsolation: false,
-//     },
-//   })
+app.on('gpu-process-crashed', (event, kill) => {
+  log.warn('app:gpu-process-crashed', event, kill);
+});
 
-//   if (process.env.VITE_DEV_SERVER_URL) {
-//     childWindow.loadURL(`${url}#${arg}`)
-//   } else {
-//     childWindow.loadFile(indexHtml, { hash: arg })
-//   }
-// })
+app.on('renderer-process-crashed', (event, webContents, kill) => {
+  log.warn('app:renderer-process-crashed', event, webContents, kill);
+});
+
+app.on('render-process-gone', (event, webContents, details) => {
+  log.warn('app:render-process-gone', event, webContents, details);
+});
+
+app.on('child-process-gone', (event, details) => {
+  log.warn('app:child-process-gone', event, details);
+});
