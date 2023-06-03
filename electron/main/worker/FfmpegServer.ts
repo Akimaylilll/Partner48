@@ -2,7 +2,6 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegPath from 'ffmpeg-static';
 import ffprobePath from 'ffprobe-static';
 
-console.log(process.argv);
 const source = process.argv[2];
 const liveId = process.argv[3];
 const host = process.argv[4];

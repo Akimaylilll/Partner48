@@ -1,5 +1,5 @@
 import DPlayer, { DPlayerEvents } from 'dplayer';
-import { closeLiveWin, getIMKey } from '../renderer/index';
+import { closeLiveWin, getIMKey, getPort } from '../renderer/index';
 import { DANMAKU_ID, DANMAKU_API, LIVE_PORT, LIVE_HOST } from '../config/index';
 import { ipcRenderer } from 'electron';
 import NimChatroomSocket from '../utils/NimChatroomSocket';
@@ -45,21 +45,25 @@ const initLive = () => {
       props.isLive = false;
     }
     setTimeout(async () => {
-      const dp = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive);
-      dp.on('pause' as DPlayerEvents, function() {
-        props.isPause = true;
-      });
-      dp.on('play' as DPlayerEvents, function() {
-        props.isPause = false;
-      });
-      dp.on('playing' as DPlayerEvents, function() {
-        props.now_time = dp.video.currentTime;
-      });
-      dp.on('danmaku_show' as DPlayerEvents,function() {
-        props.isDanmuShow = true;
-      });
-      dp.on('danmaku_hide' as DPlayerEvents,function() {
-        props.isDanmuShow = false;
+      getPort().then(item => {
+        const danmu_port = (item as any)?.danmu_port || 8173;
+        const live_port = (item as any)?.live_port || 8936;
+        const dp = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive, live_port, danmu_port);
+        dp.on('pause' as DPlayerEvents, function() {
+          props.isPause = true;
+        });
+        dp.on('play' as DPlayerEvents, function() {
+          props.isPause = false;
+        });
+        dp.on('playing' as DPlayerEvents, function() {
+          props.now_time = dp.video.currentTime;
+        });
+        dp.on('danmaku_show' as DPlayerEvents,function() {
+          props.isDanmuShow = true;
+        });
+        dp.on('danmaku_hide' as DPlayerEvents,function() {
+          props.isDanmuShow = false;
+        });
       });
       getIMKey().then(value => {
         if(roomId) {
@@ -103,11 +107,11 @@ const initLive = () => {
   return { props }
 }
 
-const initVideoPlayer = (source: string, videoId: string, isLive: boolean): DPlayer => {
+const initVideoPlayer = (source: string, videoId: string, isLive: boolean, live_port: number, danmu_port: number): DPlayer => {
   const src = isLive ?
-    `ws://${LIVE_HOST}:${LIVE_PORT}/live/${videoId}.flv` :
+    `ws://${LIVE_HOST}:${live_port}/live/${videoId}.flv` :
       source;
-  const dp: DPlayer = isLive ? livePlayer(src) : recordPlayer(src);
+  const dp: DPlayer = isLive ? livePlayer(src, danmu_port) : recordPlayer(src, danmu_port);
   dp.on('ended' as DPlayerEvents, function() {
     alert('直播结束')
     closeLiveWin(videoId);
@@ -124,7 +128,7 @@ const initVideoPlayer = (source: string, videoId: string, isLive: boolean): DPla
   return dp;
 }
 
-function livePlayer (src: string) {
+function livePlayer (src: string, danmu_port: number) {
   let flvPlayer: flvjs.Player | null = null;
   let interval: number | null = null;
   const dp: DPlayer = new DPlayer({
@@ -133,7 +137,7 @@ function livePlayer (src: string) {
     container: document.getElementById('myVideo'),
     danmaku: {
       id: DANMAKU_ID,
-      api: DANMAKU_API
+      api: DANMAKU_API.replace( "8173", danmu_port.toString())
     },
     video: {
       url: src, // url地址
@@ -179,14 +183,14 @@ function livePlayer (src: string) {
   return dp;
 }
 
-function recordPlayer (src: string) {
+function recordPlayer (src: string, danmu_port: number) {
   const dp: DPlayer = new DPlayer({
     live: false,
     preload: 'auto',
     container: document.getElementById('myVideo'),
     danmaku: {
       id: DANMAKU_ID,
-      api: DANMAKU_API
+      api: DANMAKU_API.replace( "8173", danmu_port.toString())
     },
     video: {
       url: src,

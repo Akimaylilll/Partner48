@@ -50,6 +50,15 @@ const closeWin = () => {
   ipcRenderer.send('close-im-key-win');
 }
 
+const getPort= () => {
+  return new Promise((resolve, reject) => {
+    ipcRenderer.once('get-port-reply', function (event, arg) { // 接收到Main进程返回的消息
+      resolve(arg);
+    });
+    ipcRenderer.send('get-port-query');
+  });
+}
+
 export {
   testSend,
   getLiveList,
@@ -58,5 +67,6 @@ export {
   closeLiveWin,
   getIMKey,
   setIMKey,
-  closeWin
+  closeWin,
+  getPort
 }
