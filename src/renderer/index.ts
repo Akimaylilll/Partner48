@@ -68,6 +68,12 @@ const getVersion = () => {
   });
 }
 
+const addAlertMessageListener = () => {
+  ipcRenderer.on('main-message-alert-reply', function (event, arg) { // 接收到Main进程返回的消息
+    alert(arg);
+  });
+}
+
 export {
   testSend,
   getLiveList,
@@ -78,5 +84,6 @@ export {
   setIMKey,
   closeWin,
   getPort,
-  getVersion
+  getVersion,
+  addAlertMessageListener
 }
