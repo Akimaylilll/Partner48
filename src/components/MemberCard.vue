@@ -1,6 +1,7 @@
 
 <script setup lang="ts">
 import { openLiveById } from '../renderer/index';
+import { debounce } from '../utils/index';
 import { ElCard } from 'element-plus';
 interface LiveList{
   liveId: string,
@@ -23,12 +24,12 @@ const props = defineProps({
   }
 });
 
-const openLive = (liveId: string) => {
+const openLive = debounce((liveId: string) => {
   openLiveById(liveId).then((value) => {
     // console.log('success')
     // console.log(value);
   });
-};
+});
 
 </script>
 <template>
