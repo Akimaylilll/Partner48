@@ -50,12 +50,21 @@ const closeWin = () => {
   ipcRenderer.send('close-im-key-win');
 }
 
-const getPort= () => {
+const getPort = () => {
   return new Promise((resolve, reject) => {
     ipcRenderer.once('get-port-reply', function (event, arg) { // 接收到Main进程返回的消息
       resolve(arg);
     });
     ipcRenderer.send('get-port-query');
+  });
+}
+
+const getVersion = () => {
+  return new Promise((resolve, reject) => {
+    ipcRenderer.once('detect-version-reply', function (event, arg) { // 接收到Main进程返回的消息
+      resolve(arg);
+    });
+    ipcRenderer.send('detect-version-query');
   });
 }
 
@@ -68,5 +77,6 @@ export {
   getIMKey,
   setIMKey,
   closeWin,
-  getPort
+  getPort,
+  getVersion
 }

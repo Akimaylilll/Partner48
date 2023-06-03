@@ -3,6 +3,8 @@ import { Pocket } from './pocket/pocket';
 import { VideoWin } from './win/VideoWin';
 import log  from 'electron-log';
 import Store from 'electron-store';
+import { version } from "../../package.json";
+import got from "got";
 
 export class Listeners {
   private videoWinList: Array<VideoWin> = [];
@@ -77,6 +79,14 @@ export class Listeners {
       const live_port = store.get("LIVE_PORT");
       const danmu_port = store.get("DANMAKU_PORT");
       event.reply('get-port-reply', {danmu_port, live_port});
+    });
+
+    ipcMain.on('detect-version-query', (event, ...args) => {
+      got.get("https://api.github.com/repos/Akimaylilll/Partner48/releases/latest").then(data => {
+        const latest_version = JSON.parse(data.body).tag_name;
+        (new Store).set("latest_version", latest_version);
+        event.reply('detect-version-reply', {version, latest_version});
+      });
     });
   }
 }

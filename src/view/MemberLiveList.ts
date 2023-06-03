@@ -1,6 +1,6 @@
 
 import { onMounted, reactive } from 'vue';
-import { getLiveList, openLiveById } from '../renderer/index';
+import { getLiveList, getVersion } from '../renderer/index';
 
 interface MemberLiveProps {
   liveList?: any,
@@ -75,6 +75,13 @@ export const memberCard = () => {
       next = data.next;
       returnRef.showTopLoading = false;
     });
+    setTimeout(() => {
+      getVersion().then((data: any) => {
+        if(data.version !== data.latest_version) {
+          alert("非常感谢您使用，新版本已经推出，欢迎下载。");
+        }
+      });
+    }, 5000);
   });
 
   const handleScroll = async (e: any) =>{
