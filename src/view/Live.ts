@@ -66,7 +66,7 @@ const initLive = () => {
         });
       });
       getIMKey().then(value => {
-        if(roomId) {
+        if(roomId && value) {
             const danmu = new NimChatroomSocket({
               roomId: roomId,
               onMessage: handleNewMessage

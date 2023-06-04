@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { toRefs, watch, reactive } from 'vue';
 import { memberCard, reSetReplayDict } from './MemberLiveList';
-import { debounce } from '../utils/index';
+import { debounce } from "lodash";
 import MemberCard from "../components/MemberCard.vue";
 const props = reactive(memberCard());
 const { returnRef, handleScroll } = toRefs(props);
