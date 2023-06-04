@@ -1,6 +1,6 @@
 {
   "name": "Partner48",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate.",
   "author": "maylilll <642722474@qq.com>",
@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@types/dplayer": "^1.25.2",
+    "@types/lodash": "^4.14.195",
     "@vitejs/plugin-vue": "^4.0.0",
     "electron": "^22.0.3",
     "electron-builder": "^23.6.0",
@@ -51,8 +52,10 @@
     "fluent-ffmpeg": "^2.1.2",
     "flv.js": "^1.6.2",
     "hls.js": "^1.0.2",
+    "install": "^0.13.0",
     "koa": "^2.14.1",
     "koa-body": "^6.0.1",
+    "lodash": "^4.17.21",
     "node-media-server": "^2.4.9",
     "portfinder": "^1.0.32",
     "ts-node": "^10.9.1",
