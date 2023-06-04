@@ -3,6 +3,7 @@ import { release } from 'node:os'
 import { join } from 'node:path'
 import { MainWin } from './win/MainWin';
 import log  from 'electron-log';
+import { MainBrowserWin } from "./types/index";
 
 // The built directory structure
 //
@@ -36,7 +37,7 @@ if (!app.requestSingleInstanceLock()) {
 // Read more on https://www.electronjs.org/docs/latest/tutorial/security
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
-let win: BrowserWindow | null = null
+let win: MainBrowserWin | null = null
 // Here, you can also use other preload
 
 async function createWindow() {
@@ -47,6 +48,9 @@ async function createWindow() {
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
+  win.childProcessArray.reverse().forEach(item => {
+    item.kill();
+  });
   win = null
   if (process.platform !== 'darwin') app.quit()
 })

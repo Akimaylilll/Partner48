@@ -96,6 +96,7 @@ export class VideoWin {
     this.ffmpegServer.stderr.on('data', (result) => {
       log.error(Buffer.from(result).toString());
     });
+    ipcMain.emit("main-add-childProcess", true, this.ffmpegServer);
   }
 
   async getDanmuData(filepath: string) : Promise<Array<any>> {

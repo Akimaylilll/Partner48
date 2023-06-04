@@ -5,11 +5,12 @@ import log  from 'electron-log';
 import Store from 'electron-store';
 import { version } from "../../package.json";
 import got from "got";
+import { MainBrowserWin } from "./types/index";
 
 export class Listeners {
   private videoWinList: Array<VideoWin> = [];
   // private win: BrowserWindow | null = null
-  constructor(win: BrowserWindow) {
+  constructor(win: MainBrowserWin) {
     // ipcMain.on('lives-list', (event, ...args) => {
     //   const pocket: Pocket = new Pocket();
     //   pocket.getLiveList().then(value => {
@@ -91,6 +92,10 @@ export class Listeners {
 
     ipcMain.on('main-message-alert', (event, ...args) => {
       win.webContents.send('main-message-alert-reply', args[0]);
+    });
+
+    ipcMain.on('main-add-childProcess', (event, ...args) => {
+      win.childProcessArray.push(args[0]);
     });
   }
 }
