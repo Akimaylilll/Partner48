@@ -9,8 +9,10 @@ import { fork } from 'child_process';
 import { getPort } from "portfinder";
 import { MEDIA_SERVER_RTMP_PORT, LIVE_PORT, DANMAKU_PORT } from "../config/index";
 import Store from 'electron-store';
+import { MainBrowserWin } from "../types/index";
+
 export class MainWin {
-  private win: BrowserWindow | null = null;
+  private win: MainBrowserWin | null = null;
   public constructor() {
     const preload = join(__dirname, '../preload/index.js')
     const url = process.env.VITE_DEV_SERVER_URL
@@ -28,7 +30,7 @@ export class MainWin {
         nodeIntegrationInWorker: true
       },
     });
-  
+    this.win.childProcessArray = [];
     this.win.on("closed", () => {
       app.emit("window-all-closed");
     });
@@ -115,9 +117,11 @@ export class MainWin {
     });
     child.on('exit', () => {
       setTimeout(() => {
+        this.win.childProcessArray.splice(this.win.childProcessArray.indexOf(child), 1);
         this.forkChild(tsFile, argvs);
       }, 1000);
     });
+    this.win.childProcessArray.push(child);
   }
 
   runMediaServer(rtmp_port, http_port) {
