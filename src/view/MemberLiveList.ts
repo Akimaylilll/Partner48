@@ -78,7 +78,7 @@ export const memberCard = () => {
     });
     setTimeout(() => {
       getVersion().then((data: any) => {
-        if(data.version !== data.latest_version) {
+        if(data.version !== data.latest_version.replace("v", "")) {
           alert("非常感谢您使用，新版本已经推出，欢迎下载。");
         }
       });
