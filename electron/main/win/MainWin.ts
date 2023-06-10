@@ -1,6 +1,7 @@
 import { app, BrowserWindow, shell, Menu } from 'electron'
 import { join, resolve } from 'node:path'
 import { NodeMediaWin } from './NodeMediaWin';
+import { AboutWin } from './AboutWin';
 import { KeyWin } from './KeyWin';
 import { Tools } from '../utils';
 import { Listeners } from '../listeners';
@@ -49,6 +50,11 @@ export class MainWin {
             }
           },
         ]
+      },
+      {
+        label: '关于', click: function () {
+          new AboutWin();
+        }
       }
     ]);
     Menu.setApplicationMenu(template);
