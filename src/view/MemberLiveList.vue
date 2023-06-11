@@ -15,7 +15,11 @@ watch(() => returnRef.value.showTopLoading, (newVal) => {
 watch(() => returnRef.value.replayList, (newVal: any[]) => {
   returnRef.value.replayDict = reSetReplayDict(newVal);
 });
-
+const clickTop = () => {
+  window.scrollTo(0, 0);
+  document.body.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+}
 </script>
 
 <template>
@@ -38,10 +42,22 @@ watch(() => returnRef.value.replayList, (newVal: any[]) => {
   <div v-if="returnRef.showBottomLoading" >
     <img src="../img/loading.svg" style="width: 100px;">
   </div>
+  <button class="footer" @click="clickTop"></button>
 </template>
 
 <style scoped>
 .grid {
   width: 100%;
 }
+.footer {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  background-image: url("../img/return_top.svg");
+  background-position: center;
+  color: #fff;
+}
+
 </style>
