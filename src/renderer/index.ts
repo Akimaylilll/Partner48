@@ -21,14 +21,6 @@ const openLiveById = ( id: string ) => {
   });
 }
 
-const getVideoId = () => {
-  return new Promise((resolve, reject) => {
-    ipcRenderer.once('open-video-id', function (event, arg) { // 接收到Main进程返回的消息
-      resolve(arg);
-    });
-  });
-}
-
 const closeLiveWin = (liveId: string) => {
   ipcRenderer.send('close-live-win', liveId);
 }
@@ -74,16 +66,23 @@ const addAlertMessageListener = () => {
   });
 }
 
+const addLiveClosedListener = (liveId: string) => {
+  ipcRenderer.on('live-close', function (event, arg) { // 接收到Main进程返回的消息
+    alert("直播结束");
+    ipcRenderer.send('close-live-win', liveId);
+  });
+}
+
 export {
   testSend,
   getLiveList,
   openLiveById,
-  getVideoId,
   closeLiveWin,
   getIMKey,
   setIMKey,
   closeWin,
   getPort,
   getVersion,
-  addAlertMessageListener
+  addAlertMessageListener,
+  addLiveClosedListener
 }

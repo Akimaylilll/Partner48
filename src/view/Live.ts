@@ -1,5 +1,5 @@
 import DPlayer, { DPlayerEvents } from 'dplayer';
-import { closeLiveWin, getIMKey, getPort } from '../renderer/index';
+import { closeLiveWin, getIMKey, getPort, addLiveClosedListener } from '../renderer/index';
 import { DANMAKU_ID, DANMAKU_API, LIVE_PORT, LIVE_HOST } from '../config/index';
 import { ipcRenderer } from 'electron';
 import NimChatroomSocket from '../utils/NimChatroomSocket';
@@ -22,6 +22,7 @@ interface LiveProps {
   videoDiv?: any,
   danmuBottom?: number
 }
+let dPlayer: DPlayer | null  = null;
 const initLive = () => {
   const props: LiveProps = reactive({});
   props.videoDiv = null;
@@ -35,46 +36,46 @@ const initLive = () => {
   props.now_time = 0;
   props.danmuData = [];
 
-  ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, danmus, roomId) { // 接收到Main进程返回的消息
+  ipcRenderer.on('open-video-id', function (event, arg, userName, source, type, danmus, roomId, danmu_port, live_port) { // 接收到Main进程返回的消息
     props.videoId = arg;
     props.liveType = type;
     props.danmuData = danmus;
     document.title = userName;
-    // props.roomId = roomId;
-    if(source.indexOf('.m3u8') > -1){
+
+    addLiveClosedListener(props.videoId || "");
+    if(source.indexOf('.m3u8') > -1) {
       props.isLive = false;
     }
-    setTimeout(async () => {
-      getPort().then(item => {
-        const danmu_port = (item as any)?.danmu_port || 8173;
-        const live_port = (item as any)?.live_port || 8936;
-        const dp = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive, live_port, danmu_port);
-        dp.on('pause' as DPlayerEvents, function() {
-          props.isPause = true;
-        });
-        dp.on('play' as DPlayerEvents, function() {
-          props.isPause = false;
-        });
-        dp.on('playing' as DPlayerEvents, function() {
-          props.now_time = dp.video.currentTime;
-        });
-        dp.on('danmaku_show' as DPlayerEvents,function() {
-          props.isDanmuShow = true;
-        });
-        dp.on('danmaku_hide' as DPlayerEvents,function() {
-          props.isDanmuShow = false;
-        });
-      });
-      getIMKey().then(value => {
-        if(roomId && value) {
-            const danmu = new NimChatroomSocket({
-              roomId: roomId,
-              onMessage: handleNewMessage
-            });
-            danmu.init(value as string);
-          }
-      });
-    }, 1000);
+    if(dPlayer) {
+      dPlayer.destroy();
+      dPlayer = null;
+    }
+    dPlayer = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive, live_port, danmu_port);
+    dPlayer.on('pause' as DPlayerEvents, function() {
+      props.isPause = true;
+    });
+    dPlayer.on('play' as DPlayerEvents, function() {
+      props.isPause = false;
+    });
+    dPlayer.on('playing' as DPlayerEvents, function() {
+      props.now_time = dPlayer?.video.currentTime;
+    });
+    dPlayer.on('danmaku_show' as DPlayerEvents,function() {
+      props.isDanmuShow = true;
+    });
+    dPlayer.on('danmaku_hide' as DPlayerEvents,function() {
+      props.isDanmuShow = false;
+    });
+
+    getIMKey().then(value => {
+      if(roomId && value) {
+          const danmu = new NimChatroomSocket({
+            roomId: roomId,
+            onMessage: handleNewMessage
+          });
+          danmu.init(value as string);
+        }
+    });
   });
 
   onMounted(async() => {
@@ -89,7 +90,7 @@ const initLive = () => {
           props.videoDiv && props.videoDiv.style.setProperty("--danmu-transform", `${props.radian}deg`);
         };
       }, 2000);
-    })
+    });
   });
 
   function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
@@ -112,10 +113,6 @@ const initVideoPlayer = (source: string, videoId: string, isLive: boolean, live_
     `ws://${LIVE_HOST}:${live_port}/live/${videoId}.flv` :
       source;
   const dp: DPlayer = isLive ? livePlayer(src, danmu_port) : recordPlayer(src, danmu_port);
-  dp.on('ended' as DPlayerEvents, function() {
-    alert('直播结束')
-    closeLiveWin(videoId);
-  });
   //退出全屏事件
   dp.on('webfullscreen_cancel' as DPlayerEvents,function() {
     dp.fullScreen.request('web');
@@ -156,7 +153,7 @@ function livePlayer (src: string, danmu_port: number) {
               flvPlayer = null;
               flvPlayer = flvPlayerInit(src, video);
             }
-          })
+          });
         }
       }
     }
