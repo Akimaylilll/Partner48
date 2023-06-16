@@ -29,7 +29,7 @@ const openLive = debounce((liveId: string) => {
     // console.log('success')
     // console.log(value);
   });
-}, 100);
+}, 1000);
 
 
 </script>
