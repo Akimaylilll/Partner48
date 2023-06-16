@@ -26,15 +26,23 @@ export class Listeners {
     });
 
     ipcMain.on('open-live-query', (event, ...args) => {
+      const win = this.videoWinList.filter(item => {
+        return args[0] === item.liveId;
+      });
+      if(win && win.length > 0) {
+        if(win[0].videoWin.isVisible()) {
+          win[0].videoWin.focus();
+        }
+        return;
+      }
       const video = new VideoWin(args[0]);
+      this.videoWinList.push(video);
       // TODO: 待优化
       setTimeout(() => {
         if(!video.videoWin || video.videoWin.isDestroyed()){
           return;
         }
-        if(video.videoWin.isVisible()) {
-          this.videoWinList.push(video);
-        } else {
+        if(!video.videoWin.isVisible()) {
           video.videoWin.close();
         }
       }, 10000);
@@ -42,10 +50,10 @@ export class Listeners {
     });
     ipcMain.on('close-live-win', (event, ...args) => {
       try{
-        this.videoWinList.map((item, index) => {
+        this.videoWinList.forEach((item, index) => {
           if(item.liveId == args[0]) {
             log.info("close the liveId:" + args[0]);
-            if(!item.videoWin?.isDestroyed()){
+            if(event && !item.videoWin?.isDestroyed()){
               item.videoWin.close();
             }
             this.videoWinList.splice(index, 1);

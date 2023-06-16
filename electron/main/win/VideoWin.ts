@@ -80,6 +80,7 @@ export class VideoWin {
     this.videoWin.on('close', (event) => {
       this.ffmpegServer && this.ffmpegServer.kill();
       this.ffmpegServer = null;
+      ipcMain.emit('close-live-win', null, this.liveId);
     });
 
     const url = process.env.VITE_DEV_SERVER_URL;
