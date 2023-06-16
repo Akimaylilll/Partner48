@@ -48,7 +48,16 @@ export class VideoWin {
           log.error(e);
         }
       } else {
+        const store = new Store();
+        const live_port = store.get("LIVE_PORT");
+        const danmu_port = store.get("DANMAKU_PORT");
         this.danmuData = await this.getDanmuData(content.msgFilePath);
+        setTimeout(() => {
+          this.videoWin.webContents.send('open-video-id', this.liveId,
+            this.liveUser, this.source, this.liveType,
+            this.danmuData, this.roomId, danmu_port, live_port);
+        }, 500);
+        this.videoWin.show();
       }
     });
   }
@@ -59,7 +68,7 @@ export class VideoWin {
       height: this.height,
       width: this.width,
       resizable: true,
-      show: true,
+      show: false,
       webPreferences: {
         nodeIntegration: true,
         // 官网似乎说是默认false，但是这里必须设置contextIsolation
@@ -99,7 +108,10 @@ export class VideoWin {
           const store = new Store();
           const live_port = store.get("LIVE_PORT");
           const danmu_port = store.get("DANMAKU_PORT");
-          this.videoWin.webContents.send('open-video-id', this.liveId, this.liveUser, this.source, this.liveType, this.danmuData, this.roomId, danmu_port, live_port);
+          this.videoWin.webContents.send('open-video-id', this.liveId,
+            this.liveUser, this.source, this.liveType,
+            this.danmuData, this.roomId, danmu_port, live_port);
+            this.videoWin.show();
         }
         if(res.indexOf("ffmpeg exited with code 1") > -1) {
           this.videoWin.webContents.send('live-close');

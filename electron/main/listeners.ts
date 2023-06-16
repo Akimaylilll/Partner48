@@ -37,7 +37,7 @@ export class Listeners {
         } else {
           video.videoWin.close();
         }
-      }, 5000);
+      }, 10000);
       event.reply('open-live-reply', video.source);
     });
     ipcMain.on('close-live-win', (event, ...args) => {

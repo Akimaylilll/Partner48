@@ -42,9 +42,10 @@ const initLive = () => {
     props.danmuData = danmus;
     document.title = userName;
 
-    addLiveClosedListener(props.videoId || "");
     if(source.indexOf('.m3u8') > -1) {
       props.isLive = false;
+    } else {
+      addLiveClosedListener(props.videoId || "");
     }
     if(dPlayer) {
       dPlayer.destroy();

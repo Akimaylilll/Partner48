@@ -15,7 +15,6 @@ ffmpeg.setFfprobePath(ffprobePath.path.replace(
   'app.asar',
   'app.asar.unpacked'
 ));
-console.log(source)
 const command = ffmpeg(source)
 .inputOptions('-re')
 .on('start', function (commandLine) {
