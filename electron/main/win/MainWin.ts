@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, Menu } from 'electron'
+import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
 import { join, resolve } from 'node:path'
 import { NodeMediaWin } from './NodeMediaWin';
 import { AboutWin } from './AboutWin';
@@ -117,11 +117,12 @@ export class MainWin {
     });
     child.stdout.on('data', (result) => {
       const res = Buffer.from(result).toString();
-      if(tsFile.indexOf("MediaServer") > -1 &&
-        res.indexOf("[rtmp publish] Close stream.") > -1) {
-        this.restartFfmpegServer(res);
-      }
       log.info(res);
+      if(tsFile.indexOf('MediaServer') > -1 &&
+        res.indexOf("[rtmp publish] Close stream.") > -1) {
+        const liveId = res.match(/live\/(.*?)\s/)?.[1];
+        ipcMain.emit('main-ffmpeg-server-close', true, liveId);
+      }
     });
     child.stderr.on('data', (result) => {
       log.error(Buffer.from(result).toString());
@@ -133,25 +134,6 @@ export class MainWin {
       }, 1000);
     });
     this.win.childProcessArray.push(child);
-  }
-
-  restartFfmpegServer(res) {
-    const liveId = res.match(/live\/(.*?)\s/)?.[1];
-    if(liveId && this.win?.childProcessArray.length > 0) {
-      const liveProcess = this.win.childProcessArray.filter(item => {
-        return item.liveId && item.liveId == liveId;
-      });
-      if(liveProcess?.[0]?.liveId) {
-        setTimeout(() => {
-          if(liveProcess?.[0]?.videoWin && !liveProcess[0].videoWin.isDestroyed()) {
-            liveProcess?.[0]?.restartFfmpegServer();
-          }
-        }, 2000);
-      }
-      if(liveProcess?.[0]) {
-        this.win.childProcessArray.splice(this.win.childProcessArray.indexOf(liveProcess[0]), 1);
-      }
-    }
   }
 
   runMediaServer(rtmp_port, http_port) {

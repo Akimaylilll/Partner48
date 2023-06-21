@@ -66,10 +66,12 @@ const addAlertMessageListener = () => {
   });
 }
 
-const addLiveClosedListener = (liveId: string) => {
-  ipcRenderer.on('live-close', function (event, arg) { // 接收到Main进程返回的消息
-    alert("直播结束");
-    ipcRenderer.send('close-live-win', liveId);
+const restartFfmpegServer= (liveId: string) => {
+  return new Promise((resolve, reject) => {
+    ipcRenderer.once('restart-live-process-reply', function (event, arg) { // 接收到Main进程返回的消息
+      resolve(arg);
+    });
+    ipcRenderer.send('restart-live-process-query', liveId);
   });
 }
 
@@ -84,5 +86,5 @@ export {
   getPort,
   getVersion,
   addAlertMessageListener,
-  addLiveClosedListener
+  restartFfmpegServer
 }

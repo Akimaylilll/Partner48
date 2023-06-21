@@ -24,7 +24,7 @@ export class VideoWin {
     this.liveId = liveId;
     const pocket: Pocket = new Pocket();
     pocket.getOneLiveById(liveId).then(async (content) => {
-      if(!content) {
+      if(!content || !content.user) {
         ipcMain.emit("main-message-alert", true, "该直播已关闭或不存在");
         return;
       }
@@ -35,13 +35,8 @@ export class VideoWin {
       if(this.source.indexOf('.m3u8') === -1){
         this.roomId = content.roomId;
         try{
-          const port = (new Store()).get("MEDIA_SERVER_RTMP_PORT");
           setTimeout(() => {
-            this.runFfmpegServer(this.source,
-              this.liveId.toString(),
-              "localhost",
-              port || "8935"
-            );
+            this.runFfmpegServer();
           }, 1000);
         }
         catch(e){
@@ -95,36 +90,43 @@ export class VideoWin {
     }
   }
 
-  runFfmpegServer(source, liveId, host, port) {
-    const startFfmpegServer = () => {
-      const ffmpegServerFile = resolve(join(__dirname, 'worker', `FfmpegServer.js`)).replace(/\\/g, '/');;
-      this.ffmpegServer = fork(ffmpegServerFile,
-        [source, liveId, host, port], {
-        silent: true
-      });
-      this.ffmpegServer.stdout.on('data', (result) => {
-        const res = Buffer.from(result).toString();
-        log.info(res);
-        if(res.indexOf("Vedio is Pushing") > -1) {
-          const store = new Store();
-          const live_port = store.get("LIVE_PORT");
-          const danmu_port = store.get("DANMAKU_PORT");
-          this.videoWin.webContents.send('open-video-id', this.liveId,
-            this.liveUser, this.source, this.liveType,
-            this.danmuData, this.roomId, danmu_port, live_port);
-            this.videoWin.show();
-        }
-        if(res.indexOf("ffmpeg exited with code 1") > -1) {
-          this.videoWin.webContents.send('live-close');
-        }
-      });
-      this.ffmpegServer.stderr.on('data', (result) => {
-        log.error(Buffer.from(result).toString());
-      });
-    }
-    startFfmpegServer();
+  public closeFfmpegServer() {
+    this.ffmpegServer && this.ffmpegServer.kill();
+    this.ffmpegServer = null;
+    ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
+  }
+
+  public runFfmpegServer(isSendEvent = true) {
+    const source = this.source;
+    const liveId = this.liveId.toString();
+    const host = "localhost";
+    const port = (new Store()).get("MEDIA_SERVER_RTMP_PORT") as string || "8935"
+    const ffmpegServerFile = resolve(join(__dirname, 'worker', `FfmpegServer.js`)).replace(/\\/g, '/');;
+    this.ffmpegServer = fork(ffmpegServerFile,
+      [source, liveId, host, port], {
+      silent: true
+    });
+    this.ffmpegServer.stdout.on('data', (result) => {
+      const res = Buffer.from(result).toString();
+      log.info(res);
+      if(res.indexOf("event: ffmpeg server start") > -1 && isSendEvent) {
+        const store = new Store();
+        const live_port = store.get("LIVE_PORT");
+        const danmu_port = store.get("DANMAKU_PORT");
+        this.videoWin.webContents.send('open-video-id', this.liveId,
+          this.liveUser, this.source, this.liveType,
+          this.danmuData, this.roomId, danmu_port, live_port);
+        this.videoWin.show();
+      }
+      if(res.indexOf("event: ffmpeg server error") > -1 || 
+        res.indexOf("event: ffmpeg server end") > -1 ) {
+          this.videoWin.webContents.send('ffmpeg-server-close');
+      }
+    });
+    this.ffmpegServer.stderr.on('data', (result) => {
+      log.error(Buffer.from(result).toString());
+    });
     this.ffmpegServer.liveId = liveId;
-    this.ffmpegServer.restartFfmpegServer = startFfmpegServer;
     this.ffmpegServer.videoWin = this.videoWin;
     ipcMain.emit("main-add-childProcess", true, this.ffmpegServer);
   }

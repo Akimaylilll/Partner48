@@ -53,8 +53,8 @@ export class Listeners {
         this.videoWinList.forEach((item, index) => {
           if(item.liveId == args[0]) {
             log.info("close the liveId:" + args[0]);
-            if(event && !item.videoWin?.isDestroyed()){
-              item.videoWin.close();
+            if(event && !item?.videoWin?.isDestroyed()){
+              item?.videoWin?.close();
             }
             this.videoWinList.splice(index, 1);
           }
@@ -104,6 +104,37 @@ export class Listeners {
 
     ipcMain.on('main-add-childProcess', (event, ...args) => {
       win.childProcessArray.push(args[0]);
+    });
+
+    ipcMain.on('main-delete-childProcess', (event, ...args) => {
+      const index = win.childProcessArray.indexOf(args[0]);
+      win.childProcessArray.splice(index, 1);
+    });
+
+    ipcMain.on('restart-live-process-query', (event, ...args) => {
+      const liveId = args[0];
+      const wins = this.videoWinList.filter(item => {
+        return item.liveId === liveId;
+      });
+      wins.forEach(item => {
+        if(item !== wins[0]) {
+          item.videoWin.isDestroyed() && item.videoWin.destroy();
+          const index = this.videoWinList.indexOf(item);
+          this.videoWinList.splice(index, 1);
+        } else {
+          item.closeFfmpegServer();
+          item.runFfmpegServer(false);
+        }
+      });
+      event.reply('restart-live-process-reply');
+    });
+
+    ipcMain.on('main-ffmpeg-server-close', (event, ...args) => {
+      const liveId = args[0];
+      const wins = this.videoWinList.filter(item => {
+        return item.liveId === liveId;
+      });
+      wins?.[0]?.videoWin.webContents.send('ffmpeg-server-close');
     });
   }
 }
