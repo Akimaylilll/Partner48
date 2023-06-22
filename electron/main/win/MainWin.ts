@@ -156,7 +156,7 @@ export class MainWin {
       };
       Promise.all(Object.keys(object).map(item => {
         return new Promise(function(resolve, reject){
-          getPort({port: MEDIA_SERVER_RTMP_PORT} , function(err, port){
+          getPort({port: object[item]} , function(err, port){
             if(err) {
               reject(err);
             }
@@ -165,6 +165,7 @@ export class MainWin {
           });
         });
       })).then(() => {
+        console.log(object)
         _that.runMediaServer(object["MEDIA_SERVER_RTMP_PORT"], object["LIVE_PORT"]);
         _that.runDanmuServer(object["DANMAKU_PORT"]);
         res(object);

@@ -48,7 +48,7 @@ async function createWindow() {
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
-  win.childProcessArray.reverse().forEach(item => {
+  win?.childProcessArray.reverse().forEach(item => {
     item.kill();
   });
   win = null

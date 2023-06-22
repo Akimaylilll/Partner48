@@ -11,6 +11,7 @@ export class Listeners {
   private videoWinList: Array<VideoWin> = [];
   // private win: BrowserWindow | null = null
   constructor(win: MainBrowserWin) {
+    ipcMain.setMaxListeners(50);
     // ipcMain.on('lives-list', (event, ...args) => {
     //   const pocket: Pocket = new Pocket();
     //   pocket.getLiveList().then(value => {
@@ -56,6 +57,7 @@ export class Listeners {
             if(event && !item?.videoWin?.isDestroyed()){
               item?.videoWin?.close();
             }
+            item.closeFfmpegServer();
             this.videoWinList.splice(index, 1);
           }
         })

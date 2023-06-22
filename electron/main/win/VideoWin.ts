@@ -73,8 +73,8 @@ export class VideoWin {
     this.videoWin.menuBarVisible = false;
 
     this.videoWin.on('close', (event) => {
-      this.ffmpegServer && this.ffmpegServer.kill();
-      this.ffmpegServer = null;
+      // this.ffmpegServer && this.ffmpegServer.kill();
+      // this.ffmpegServer = null;
       ipcMain.emit('close-live-win', null, this.liveId);
     });
 
@@ -91,9 +91,10 @@ export class VideoWin {
   }
 
   public closeFfmpegServer() {
+    ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
+    this.ffmpegServer.stdin.write('q');
     this.ffmpegServer && this.ffmpegServer.kill();
     this.ffmpegServer = null;
-    ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
   }
 
   public runFfmpegServer(isSendEvent = true) {
