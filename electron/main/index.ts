@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { MainWin } from './win/MainWin';
 import log  from 'electron-log';
 import { MainBrowserWin } from "./types/index";
+import treeKill from 'tree-kill';
 
 // The built directory structure
 //
@@ -49,10 +50,10 @@ app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
   win?.childProcessArray.reverse().forEach(item => {
-    item.kill();
+    treeKill(item.pid);
   });
-  win = null
-  if (process.platform !== 'darwin') app.quit()
+  win = null;
+  app.quit();
 })
 
 app.on('second-instance', () => {

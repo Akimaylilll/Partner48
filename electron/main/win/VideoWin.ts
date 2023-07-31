@@ -4,6 +4,7 @@ import { join, basename, dirname, resolve } from 'node:path';
 import { readFileSync, rmSync, existsSync } from 'fs';
 import download from "download";
 import { fork } from 'child_process';
+import treeKill from 'tree-kill';
 
 import log  from 'electron-log';
 import { Tools } from '../utils';
@@ -92,8 +93,7 @@ export class VideoWin {
 
   public closeFfmpegServer() {
     ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
-    this.ffmpegServer.stdin.write('q');
-    this.ffmpegServer && this.ffmpegServer.kill();
+    this.ffmpegServer && treeKill(this.ffmpegServer.pid);
     this.ffmpegServer = null;
   }
 
