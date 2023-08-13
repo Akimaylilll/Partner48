@@ -25,9 +25,13 @@ const props = defineProps({
 });
 
 const openLive = debounce((liveId: string) => {
+  document.body.style.cursor = 'wait';
   openLiveById(liveId).then((value) => {
     // console.log('success')
     // console.log(value);
+    setTimeout(() => {
+      document.body.style.cursor = '';
+    }, 2000);
   });
 }, 500);
 
@@ -59,7 +63,6 @@ const openLive = debounce((liveId: string) => {
  .grid-item {
     width: 46%;
     padding-bottom: 10px;
-    cursor: pointer;
     border-radius: 10px;
     border: transparent 2px solid;
   }

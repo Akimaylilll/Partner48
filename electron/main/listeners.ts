@@ -9,7 +9,7 @@ import { MainBrowserWin } from "./types/index";
 
 export class Listeners {
   private videoWinList: Array<VideoWin> = [];
-  // private win: BrowserWindow | null = null
+  private win: MainBrowserWin | null = null;
   constructor(win: MainBrowserWin) {
     ipcMain.setMaxListeners(50);
     // ipcMain.on('lives-list', (event, ...args) => {
@@ -18,7 +18,7 @@ export class Listeners {
     //     console.log(value);
     //   });
     // });
-
+    this.win = win;
     ipcMain.on('lives-list-query', (event, ...args) => {
       const pocket: Pocket = new Pocket();
       pocket.getLiveList(args[0], args[1]).then(value => {
@@ -38,6 +38,7 @@ export class Listeners {
       }
       const video = new VideoWin(args[0]);
       this.videoWinList.push(video);
+      this.win.videoWinList = this.videoWinList;
       // TODO: 待优化
       setTimeout(() => {
         if(!video.videoWin || video.videoWin.isDestroyed()){
@@ -60,7 +61,8 @@ export class Listeners {
             item.closeFfmpegServer();
             this.videoWinList.splice(index, 1);
           }
-        })
+        });
+        this.win.videoWinList = this.videoWinList;
       } catch (e) {
         log.error(`close the liveId ${ args[0] } is error: ${ e }` );
       }
@@ -128,6 +130,7 @@ export class Listeners {
           item.runFfmpegServer(false);
         }
       });
+      this.win.videoWinList = this.videoWinList;
       event.reply('restart-live-process-reply');
     });
 

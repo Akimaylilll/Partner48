@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { MainWin } from './win/MainWin';
 import log  from 'electron-log';
 import { MainBrowserWin } from "./types/index";
-import treeKill from 'tree-kill';
+import { Tools } from "./utils/index";
 
 // The built directory structure
 //
@@ -48,10 +48,7 @@ async function createWindow() {
 
 app.whenReady().then(createWindow)
 
-app.on('window-all-closed', () => {
-  win?.childProcessArray.reverse().forEach(item => {
-    treeKill(item.pid);
-  });
+app.on('window-all-closed', async () => {
   win = null;
   app.quit();
 })

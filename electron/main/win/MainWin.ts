@@ -32,7 +32,20 @@ export class MainWin {
       },
     });
     this.win.childProcessArray = [];
-    this.win.on("closed", () => {
+    this.win.isExit = false;
+
+    this.win.on("closed", async () => {
+      this.win && (this.win.isExit = true);
+      while(this.win?.videoWinList && this.win?.videoWinList.length > 0) {
+        const item = this.win.videoWinList[0];
+        if(item.videoWin || !item.videoWin.isDestroyed()){
+          item.videoWin.close();
+        }
+      }
+      const childProcessArray = this.win?.childProcessArray.reverse() || [];
+      await Promise.all(childProcessArray.map(async item => {
+        return await Tools.killProcess(item.pid);
+      }));
       app.emit("window-all-closed");
     });
     const _that = this;
@@ -128,10 +141,14 @@ export class MainWin {
       log.error(Buffer.from(result).toString());
     });
     child.on('exit', () => {
-      setTimeout(() => {
-        this.win.childProcessArray.splice(this.win.childProcessArray.indexOf(child), 1);
-        this.forkChild(tsFile, argvs);
-      }, 1000);
+      console.log(new Date());
+      if(!this.win.isExit) {
+        console.log(new Date(),this.win.isExit)
+        setTimeout(() => {
+          this.win.childProcessArray.splice(this.win.childProcessArray.indexOf(child), 1);
+          this.forkChild(tsFile, argvs);
+        }, 1000);
+      }
     });
     this.win.childProcessArray.push(child);
   }

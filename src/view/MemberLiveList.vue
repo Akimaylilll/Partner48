@@ -58,6 +58,7 @@ const clickTop = () => {
   background-image: url("../img/return_top.svg");
   background-position: center;
   color: #fff;
+  background-color: #1a1a1a !important;
 }
 
 </style>

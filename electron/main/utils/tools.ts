@@ -1,5 +1,6 @@
 import { execSync } from 'child_process';
 import os from 'os';
+import treeKill from 'tree-kill';
 export class Tools {
 	/* 随机字符串 */
 	public static rStr(len: number): string {
@@ -100,5 +101,17 @@ export class Tools {
 		return s;
 	}
 
+	public static sleep (time) {
+		return new Promise(resolve => setTimeout(resolve, time))
+	}
+
+	public static killProcess(pid: number) {
+		return new Promise((resolve,reject) => {
+			treeKill(pid,'SIGKILL', function(err) {
+				if(err) reject;
+				resolve;
+			});
+		});
+	}
 
 }
