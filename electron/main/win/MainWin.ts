@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, Menu } from 'electron'
+import { app, BrowserWindow, shell, Menu, ipcMain } from 'electron'
 import { join, resolve } from 'node:path'
 import { NodeMediaWin } from './NodeMediaWin';
 import { AboutWin } from './AboutWin';
@@ -32,7 +32,20 @@ export class MainWin {
       },
     });
     this.win.childProcessArray = [];
-    this.win.on("closed", () => {
+    this.win.isExit = false;
+
+    this.win.on("closed", async () => {
+      this.win && (this.win.isExit = true);
+      while(this.win?.videoWinList && this.win?.videoWinList.length > 0) {
+        const item = this.win.videoWinList[0];
+        if(item.videoWin || !item.videoWin.isDestroyed()){
+          item.videoWin.close();
+        }
+      }
+      const childProcessArray = this.win?.childProcessArray.reverse() || [];
+      await Promise.all(childProcessArray.map(async item => {
+        return await Tools.killProcess(item.pid);
+      }));
       app.emit("window-all-closed");
     });
     const _that = this;
@@ -116,16 +129,26 @@ export class MainWin {
       silent: true
     });
     child.stdout.on('data', (result) => {
-      log.info(Buffer.from(result).toString());
+      const res = Buffer.from(result).toString();
+      log.info(res);
+      if(tsFile.indexOf('MediaServer') > -1 &&
+        res.indexOf("[rtmp publish] Close stream.") > -1) {
+        const liveId = res.match(/live\/(.*?)\s/)?.[1];
+        ipcMain.emit('main-ffmpeg-server-close', true, liveId);
+      }
     });
     child.stderr.on('data', (result) => {
       log.error(Buffer.from(result).toString());
     });
     child.on('exit', () => {
-      setTimeout(() => {
-        this.win.childProcessArray.splice(this.win.childProcessArray.indexOf(child), 1);
-        this.forkChild(tsFile, argvs);
-      }, 1000);
+      console.log(new Date());
+      if(!this.win.isExit) {
+        console.log(new Date(),this.win.isExit)
+        setTimeout(() => {
+          this.win.childProcessArray.splice(this.win.childProcessArray.indexOf(child), 1);
+          this.forkChild(tsFile, argvs);
+        }, 1000);
+      }
     });
     this.win.childProcessArray.push(child);
   }
@@ -150,7 +173,7 @@ export class MainWin {
       };
       Promise.all(Object.keys(object).map(item => {
         return new Promise(function(resolve, reject){
-          getPort({port: MEDIA_SERVER_RTMP_PORT} , function(err, port){
+          getPort({port: object[item]} , function(err, port){
             if(err) {
               reject(err);
             }
@@ -159,6 +182,7 @@ export class MainWin {
           });
         });
       })).then(() => {
+        console.log(object)
         _that.runMediaServer(object["MEDIA_SERVER_RTMP_PORT"], object["LIVE_PORT"]);
         _that.runDanmuServer(object["DANMAKU_PORT"]);
         res(object);

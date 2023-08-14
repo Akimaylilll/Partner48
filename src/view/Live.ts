@@ -1,12 +1,16 @@
 import DPlayer, { DPlayerEvents } from 'dplayer';
-import { closeLiveWin, getIMKey, getPort } from '../renderer/index';
-import { DANMAKU_ID, DANMAKU_API, LIVE_PORT, LIVE_HOST } from '../config/index';
+import { getIMKey, restartFfmpegServer, closeLiveWin } from '../renderer/index';
+import { DANMAKU_ID, DANMAKU_API, LIVE_HOST } from '../config/index';
 import { ipcRenderer } from 'electron';
 import NimChatroomSocket from '../utils/NimChatroomSocket';
 import { reactive, onMounted, nextTick } from 'vue';
 import flvjs from 'flv.js';
 import Hls from 'hls.js';
 
+interface LivePalyer extends DPlayer{
+  restartFlvPlayer?: Function | null,
+  flvPlayer?: flvjs.Player | null
+}
 interface LiveProps {
   videoId?: string,
   liveType?: number,
@@ -20,8 +24,14 @@ interface LiveProps {
   isPointerEvents?: boolean,
   radian?: number,
   videoDiv?: any,
-  danmuBottom?: number
+  danmuBottom?: number,
+  dPlayer?: LivePalyer | null,
+  source?: string
+  timeout?: number,
+  isShowAlert?: boolean,
+  closeLive?: Function | null,
 }
+
 const initLive = () => {
   const props: LiveProps = reactive({});
   props.videoDiv = null;
@@ -34,47 +44,105 @@ const initLive = () => {
   props.danmuBottom = 0;
   props.now_time = 0;
   props.danmuData = [];
+  props.dPlayer = null;
+  props.source = '';
+  props.timeout = 0;
+  props.isShowAlert = true;
+  let danmu: NimChatroomSocket | null  = null;
+  let repeat = 3;
+  let timer: number | null = null;
+  let timeouter: number | null = null;
+  props.closeLive = null;
 
-  ipcRenderer.once('open-video-id', function (event, arg, userName, source, type, danmus, roomId) { // 接收到Main进程返回的消息
+  ipcRenderer.on('open-video-id', function (event, arg, userName, source, type, danmus, roomId, danmu_port, live_port) { // 接收到Main进程返回的消息
     props.videoId = arg;
     props.liveType = type;
     props.danmuData = danmus;
+    props.source = source;
     document.title = userName;
-    // props.roomId = roomId;
-    if(source.indexOf('.m3u8') > -1){
+
+    if(source.indexOf('.m3u8') > -1) {
       props.isLive = false;
+    } else {
+      // addLiveClosedListener(props.videoId || "");
     }
-    setTimeout(async () => {
-      getPort().then(item => {
-        const danmu_port = (item as any)?.danmu_port || 8173;
-        const live_port = (item as any)?.live_port || 8936;
-        const dp = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive, live_port, danmu_port);
-        dp.on('pause' as DPlayerEvents, function() {
-          props.isPause = true;
+    if(props.dPlayer) {
+      props.dPlayer.destroy();
+      props.dPlayer = null;
+    }
+    props.dPlayer = initVideoPlayer(source, props.videoId || '', props.isLive === undefined ? true : props.isLive, live_port, danmu_port);
+
+    // props.dPlayer.volume(volume, true, false);
+    props.dPlayer.on('pause' as DPlayerEvents, function() {
+      props.isPause = true;
+    });
+    props.dPlayer.on('play' as DPlayerEvents, function() {
+      props.isPause = false;
+    });
+    props.dPlayer.on('waiting' as DPlayerEvents, function() {
+      !timeouter && (timeouter = window.setInterval(() => {
+        if(props.timeout === undefined) {
+          props.timeout = 0;
+        }
+        props.timeout  = props.timeout++;
+      }, 1000));
+    });
+    props.dPlayer.on('playing' as DPlayerEvents, function() {
+      props.now_time = props.dPlayer?.video.currentTime;
+      timer && clearInterval(timer);
+      repeat = 3;
+      timeouter && clearInterval(timeouter);
+      props.timeout = 0;
+      timeouter = null;
+    });
+    props.dPlayer.on('danmaku_show' as DPlayerEvents,function() {
+      props.isDanmuShow = true;
+    });
+    props.dPlayer.on('danmaku_hide' as DPlayerEvents,function() {
+      props.isDanmuShow = false;
+    });
+
+    getIMKey().then(value => {
+      if(roomId && value  && !danmu) {
+          danmu = new NimChatroomSocket({
+            roomId: roomId,
+            onMessage: handleNewMessage
+          });
+          danmu.init(value as string);
+        }
+    });
+  });
+
+  function closeLive() {
+    if(props?.source && props.source.indexOf('.m3u8') === -1) {
+      if(repeat == 0) {
+        if(props.isShowAlert) {
+          props.isShowAlert = false;
+          alert('直播结束');
+          closeLiveWin(props?.videoId || '');
+        }
+      } else {
+        restartFfmpegServer(props.videoId || '').then(() => {
+          setTimeout(() => {
+            if (props?.dPlayer?.flvPlayer) {
+              let flvPlayer: flvjs.Player | null = props.dPlayer.flvPlayer;
+              flvPlayer.pause();
+              flvPlayer.unload();
+              flvPlayer.detachMediaElement();
+              flvPlayer.destroy();
+              flvPlayer = null;
+              flvPlayer = props.dPlayer.restartFlvPlayer && props.dPlayer.restartFlvPlayer()
+              flvPlayer?.play();
+            }
+          }, 1000);
         });
-        dp.on('play' as DPlayerEvents, function() {
-          props.isPause = false;
-        });
-        dp.on('playing' as DPlayerEvents, function() {
-          props.now_time = dp.video.currentTime;
-        });
-        dp.on('danmaku_show' as DPlayerEvents,function() {
-          props.isDanmuShow = true;
-        });
-        dp.on('danmaku_hide' as DPlayerEvents,function() {
-          props.isDanmuShow = false;
-        });
-      });
-      getIMKey().then(value => {
-        if(roomId && value) {
-            const danmu = new NimChatroomSocket({
-              roomId: roomId,
-              onMessage: handleNewMessage
-            });
-            danmu.init(value as string);
-          }
-      });
-    }, 1000);
+        repeat--;
+      }
+    }
+  }
+
+  ipcRenderer.on("ffmpeg-server-close", function() {
+    closeLive()
   });
 
   onMounted(async() => {
@@ -88,8 +156,9 @@ const initLive = () => {
           }
           props.videoDiv && props.videoDiv.style.setProperty("--danmu-transform", `${props.radian}deg`);
         };
+        props.closeLive = closeLive;
       }, 2000);
-    })
+    });
   });
 
   function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
@@ -112,10 +181,6 @@ const initVideoPlayer = (source: string, videoId: string, isLive: boolean, live_
     `ws://${LIVE_HOST}:${live_port}/live/${videoId}.flv` :
       source;
   const dp: DPlayer = isLive ? livePlayer(src, danmu_port) : recordPlayer(src, danmu_port);
-  dp.on('ended' as DPlayerEvents, function() {
-    alert('直播结束')
-    closeLiveWin(videoId);
-  });
   //退出全屏事件
   dp.on('webfullscreen_cancel' as DPlayerEvents,function() {
     dp.fullScreen.request('web');
@@ -129,9 +194,10 @@ const initVideoPlayer = (source: string, videoId: string, isLive: boolean, live_
 }
 
 function livePlayer (src: string, danmu_port: number) {
-  let flvPlayer: flvjs.Player | null = null;
   let interval: number | null = null;
-  const dp: DPlayer = new DPlayer({
+  let restartFlvPlayer: Function | null = null;
+  let flvPlayer: flvjs.Player | null = null;
+  const dp: LivePalyer = new DPlayer({
     live: true,
     preload: 'auto',
     container: document.getElementById('myVideo'),
@@ -143,8 +209,11 @@ function livePlayer (src: string, danmu_port: number) {
       url: src, // url地址
       type: 'customFlv',
       customType: {
-        customFlv: function(video: any, player: any) {
+        customFlv: function (video: any, player: any) {
           flvPlayer = flvPlayerInit(src, video);
+          restartFlvPlayer = () => {
+            return flvPlayerInit(src, video);
+          }
           flvPlayer?.on('error', e => {
             // 这里是视频加载失败
             console.log(e);
@@ -154,9 +223,9 @@ function livePlayer (src: string, danmu_port: number) {
               flvPlayer.detachMediaElement();
               flvPlayer.destroy();
               flvPlayer = null;
-              flvPlayer = flvPlayerInit(src, video);
+              flvPlayer = restartFlvPlayer && restartFlvPlayer()
             }
-          })
+          });
         }
       }
     }
@@ -180,6 +249,9 @@ function livePlayer (src: string, danmu_port: number) {
       }, 2000); //2000毫秒执行一次
     }
   });
+
+  dp.restartFlvPlayer = restartFlvPlayer;
+  dp.flvPlayer = flvPlayer;
   return dp;
 }
 

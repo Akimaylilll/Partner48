@@ -15,20 +15,22 @@ ffmpeg.setFfprobePath(ffprobePath.path.replace(
   'app.asar',
   'app.asar.unpacked'
 ));
-console.log(source)
 const command = ffmpeg(source)
 .inputOptions('-re')
 .on('start', function (commandLine) {
   console.log('[' + new Date() + '] Vedio is Pushing !');
   console.log('commandLine: ' + commandLine);
+  console.log("event: ffmpeg server start");
 })
 .on('error', function (err, stdout, stderr) {
   console.log('error: ' + err.message);
   console.log('stdout: ' + stdout);
   console.log('stderr: ' + stderr);
+  console.log("event: ffmpeg server error");
 })
 .on('end', function () {
   console.log('[' + new Date() + '] Vedio Pushing is Finished !');
+  console.log("event: ffmpeg server end");
 })
 .addOptions([
   '-c:v libx264',

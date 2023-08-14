@@ -3,6 +3,7 @@
 import { ref, onMounted, computed, watch, toRefs, createApp, h, reactive } from 'vue';
 import Danmu from "../components/Danmu.vue";
 import { initLive } from './Live';
+import { closeLiveWin } from '../renderer/index';
 const { props } = toRefs(reactive(initLive()));
 const videoDiv = ref<any>(null);
 
@@ -18,12 +19,7 @@ const danmuScroll = ()=> {
   }, 5000);
 }
 
-onMounted(async() => {
-  window.onresize = () => {
-    return (() => {
-      screenWidth.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
-    })();
-  }
+const renderDanmu = () => {
   setTimeout(() => {
     const danmu = {
       render() {
@@ -56,6 +52,15 @@ onMounted(async() => {
       });
     }, 2000);
   }, 2000);
+}
+
+onMounted(async() => {
+  window.onresize = () => {
+    return (() => {
+      screenWidth.value = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
+    })();
+  }
+  renderDanmu();
 });
 
 watch(screenWidth, (newVal) => {
@@ -69,6 +74,20 @@ watch(() => props.value.isPointerEvents, (newVal) => {
     deep: true
   }
 );
+
+watch(() => props.value.dPlayer, (newVal) => {
+    renderDanmu();
+  }, {
+    immediate: true,
+    deep: true
+  }
+);
+
+watch(() => props.value.timeout, (newVal) => {
+  if(newVal as number > 20 && props.value.isShowAlert) {
+    props.value.closeLive && props.value.closeLive()
+  }
+});
 
 const clcStyle = computed(() => {
   const style: any = {};

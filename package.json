@@ -1,6 +1,6 @@
 {
   "name": "Partner48",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate.",
   "author": "maylilll <642722474@qq.com>",
@@ -58,6 +58,7 @@
     "lodash": "^4.17.21",
     "node-media-server": "^2.4.9",
     "portfinder": "^1.0.32",
+    "tree-kill": "^1.2.2",
     "ts-node": "^10.9.1",
     "videojs-contrib-hls": "^5.15.0",
     "videojs-flash": "^2.2.1",

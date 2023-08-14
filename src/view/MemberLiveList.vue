@@ -26,7 +26,7 @@ const clickTop = () => {
   <div v-if="returnRef.showTopLoading">
     <img src="../img/loading.svg" style="width: 100px;">
   </div>
-  <div @scroll.prevent="debounce(handleScroll)" style="width:100%; height: 100%;">
+  <div @scroll.prevent="debounce(handleScroll, 1000)" style="width:100%; height: 100%;">
     <div style="width: 100%">直播</div>
       <div v-masonry gutter="10" :v-if="returnRef.show" class="grid">
         <MemberCard :live-list = returnRef.liveList></MemberCard>
@@ -58,6 +58,7 @@ const clickTop = () => {
   background-image: url("../img/return_top.svg");
   background-position: center;
   color: #fff;
+  background-color: #1a1a1a !important;
 }
 
 </style>
