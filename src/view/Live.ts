@@ -79,6 +79,9 @@ const initLive = () => {
     props.dPlayer.on('play' as DPlayerEvents, function() {
       props.isPause = false;
     });
+    props.dPlayer.on('loadeddata' as DPlayerEvents, function() {
+      localStorage.setItem('isOpenLivePage', "false");
+    });
     props.dPlayer.on('waiting' as DPlayerEvents, function() {
       !timeouter && (timeouter = window.setInterval(() => {
         if(props.timeout === undefined) {
