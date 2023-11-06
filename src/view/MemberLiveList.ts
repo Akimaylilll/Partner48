@@ -24,7 +24,7 @@ export const initPage = async () => {
   await initMemberList();
 }
 
-export const initMemberList = async () => {
+const initMemberList = async () => {
   localStorage.removeItem('liveList');
   localStorage.removeItem('replayList');
   localStorage.removeItem('next');
@@ -42,7 +42,7 @@ const initMessage = () => {
   }, 5000);
 }
 
-export const getMemberList = async () => {
+const getMemberList = async () => {
   const liveList = useStorage('liveList', [] as any[]);
   const replayList = useStorage('replayList', [] as any[]);
   const next = useStorage('next', "0");
@@ -59,4 +59,28 @@ export const getMemberList = async () => {
     replayList.value = Array.from(new Set([...replayList.value,...replayData.liveList]));
     next.value = replayData.next;
   }
+}
+
+export const handleScroll = async (e: any) => {
+  const showTopLoading = useStorage('showTopLoading', false);
+  const liveList = useStorage('liveList', [] as any[]);
+  const replayList = useStorage('replayList', [] as any[]);
+  const showBottomLoading = useStorage('showBottomLoading', false);
+  const {scrollTop, clientHeight, scrollHeight} = e.target.childNodes[1];
+  if(scrollTop === 0) {
+    e.target.childNodes[1].scrollTop = 1;
+    showTopLoading.value = true;
+    liveList.value = [];
+    replayList.value = [];
+    await initMemberList();
+    showTopLoading.value = false;
+    return;
+  }
+  //滚动条未触底
+  if (scrollTop + clientHeight < scrollHeight - 1) {
+    return;
+  }
+  showBottomLoading.value = true;
+  await getMemberList();
+  showBottomLoading.value = false;
 }

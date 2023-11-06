@@ -1,16 +1,37 @@
 <script setup lang="ts">
 import { toRefs, watch, reactive, onMounted, ref } from 'vue';
 import { useStorage } from '@vueuse/core';
-import { memberCard, reSetReplayDict, initPage, initMemberList, getMemberList } from './MemberLiveList';
+import { handleScroll, reSetReplayDict, initPage } from './MemberLiveList';
 import { debounce } from "lodash";
 import MemberCard from "../components/MemberCard.vue";
+
+const orignalSetItem = localStorage.setItem;
+localStorage.setItem = function(key, newValue){
+  const setItemEvent = new Event("setItemEvent");
+  setItemEvent.key = key;
+  setItemEvent.newValue = newValue;
+  window.dispatchEvent(setItemEvent);
+  orignalSetItem.apply(this,arguments);
+}
+
 const replayDict = ref<any>({});
-const showTopLoading = ref(true);
-const showBottomLoading = ref(false);
 const liveList = ref([]);
 const replayList = ref([]);
+const showTopLoading = ref(true);
+const showBottomLoading = ref(false);
 
 onMounted(() => {
+  window.addEventListener("setItemEvent", function(e) {
+    if(e.key === "liveList") {
+      liveList.value = JSON.parse(e.newValue);
+    } else if(e.key === "replayList") {
+      replayList.value = JSON.parse(e.newValue);
+    } else if(e.key === "showTopLoading") {
+      showTopLoading.value = JSON.parse(e.newValue);
+    } else if(e.key === "showBottomLoading") {
+      showBottomLoading.value = JSON.parse(e.newValue);
+    }
+  });
   initPage().then(() => {
     showTopLoading.value = false;
     window.addEventListener('scroll', handleScroll, true);
@@ -19,7 +40,7 @@ onMounted(() => {
   });
 });
 
-watch(() => showTopLoading, (newVal) => {
+watch(showTopLoading, (newVal) => {
   if(newVal) {
     document.body.style.overflowY = 'scroll';
   } else {
@@ -37,29 +58,6 @@ const clickTop = () => {
   document.documentElement.scrollTop = 0;
 }
 
-const handleScroll = async (e: any) => {
-  const {scrollTop, clientHeight, scrollHeight} = e.target.childNodes[1];
-  if(scrollTop === 0) {
-    e.target.childNodes[1].scrollTop = 1;
-    showTopLoading.value = true;
-    liveList.value = [];
-    replayList.value = [];
-    await initMemberList();
-    liveList.value = useStorage('liveList', [] as any[]).value;
-    replayList.value = useStorage('replayList', [] as any[]).value;
-    showTopLoading.value = false;
-    return;
-  }
-  //滚动条未触底
-  if (scrollTop + clientHeight < scrollHeight - 1) {
-    return;
-  }
-  showBottomLoading.value = true;
-  await getMemberList();
-  liveList.value = useStorage('liveList', [] as any[]).value;
-  replayList.value = useStorage('replayList', [] as any[]).value;
-  showBottomLoading.value = false;
-}
 </script>
 
 <template>
