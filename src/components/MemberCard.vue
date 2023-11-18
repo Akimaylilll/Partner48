@@ -4,10 +4,10 @@ import { useStorage } from '@vueuse/core';
 import { openLiveById } from '../renderer/index';
 import { debounce } from "lodash";
 import { ElCard } from 'element-plus';
+import { ipcRenderer } from 'electron';
 
 const cursor = ref('pointer');
-const isOpenLivePage = useStorage('isOpenLivePage', false);
-isOpenLivePage.value = false;
+const isOpenLivePage = ref(false);
 
 interface LiveList{
   liveId: string,
@@ -30,22 +30,24 @@ const props = defineProps({
   }
 });
 
-const openLive = debounce((liveId: string) => {
+const openLive = debounce((liveId: string, username: string) => {
   cursor.value = "wait";
   isOpenLivePage.value = true;
-  openLiveById(liveId).then((value) => {console.log(value)});
-}, 500);
+  openLiveById(liveId, username).then((value) => {console.log(value)});
+}, 1000, {
+  leading: true,
+  trailing: false
+});
 
-watch(isOpenLivePage, (newVal) => {
-  if(!newVal) {
-    cursor.value = "pointer";
-  }
+ipcRenderer.on('live-init-success', function (event, args){
+  isOpenLivePage.value = false;
+  cursor.value = "pointer";
 });
 
 </script>
 <template>
   <div v-masonry-tile gutter="10" itemSelector=".grid-item" :fitWidth= "true" class="grid-item" v-for="(o ,index) in liveList" :key="index">
-    <el-card @click="!isOpenLivePage&&openLive(o.liveId)">
+    <el-card @click="!isOpenLivePage&&openLive(o.liveId, o.userInfo.nickname)">
       <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
       <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 1 ? '视频' : '电台'}}</span>
       <div style="padding: 14px;">

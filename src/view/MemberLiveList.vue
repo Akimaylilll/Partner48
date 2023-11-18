@@ -1,42 +1,21 @@
 <script setup lang="ts">
 import { toRefs, watch, reactive, onMounted, ref } from 'vue';
 import { useStorage } from '@vueuse/core';
-import { handleScroll, reSetReplayDict, initPage } from './MemberLiveList';
+import { useMemberLiveListStore } from '../store/useMemberLiveListStore';
 import { debounce } from "lodash";
 import MemberCard from "../components/MemberCard.vue";
+import { storeToRefs } from "pinia";
 
-const orignalSetItem = localStorage.setItem;
-localStorage.setItem = function(key, newValue){
-  const setItemEvent = new Event("setItemEvent");
-  setItemEvent.key = key;
-  setItemEvent.newValue = newValue;
-  window.dispatchEvent(setItemEvent);
-  orignalSetItem.apply(this,arguments);
-}
+const memberLiveListStore = useMemberLiveListStore();
+const { reSetReplayDict, initPage, handleScroll } = memberLiveListStore;
+const { liveList, replayList, next, isQueryLive, showTopLoading, showBottomLoading } = storeToRefs(memberLiveListStore);
 
 const replayDict = ref<any>({});
-const liveList = ref([]);
-const replayList = ref([]);
-const showTopLoading = ref(true);
-const showBottomLoading = ref(false);
 
 onMounted(() => {
-  window.addEventListener("setItemEvent", function(e) {
-    if(e.key === "liveList") {
-      liveList.value = JSON.parse(e.newValue);
-    } else if(e.key === "replayList") {
-      replayList.value = JSON.parse(e.newValue);
-    } else if(e.key === "showTopLoading") {
-      showTopLoading.value = JSON.parse(e.newValue);
-    } else if(e.key === "showBottomLoading") {
-      showBottomLoading.value = JSON.parse(e.newValue);
-    }
-  });
   initPage().then(() => {
     showTopLoading.value = false;
     window.addEventListener('scroll', handleScroll, true);
-    liveList.value = useStorage('liveList', [] as any[]).value;
-    replayList.value = useStorage('replayList', [] as any[]).value;
   });
 });
 
@@ -52,11 +31,14 @@ watch(replayList, (newVal: any[]) => {
   replayDict.value = reSetReplayDict(newVal);
 });
 
-const clickTop = () => {
+const clickTop = debounce(() => {
   window.scrollTo(0, 0);
   document.body.scrollTop = 0;
   document.documentElement.scrollTop = 0;
-}
+}, 1000, {
+  leading: true,
+  trailing: false
+});
 
 </script>
 

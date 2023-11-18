@@ -143,5 +143,6 @@ const spanMouseleave = () => {
   border-radius: 5px;
   display: inline-block;
   pointer-events: auto;
+  line-height: 18px;
 }
 </style>
