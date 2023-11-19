@@ -12,12 +12,12 @@ const getLiveList = (isLive: boolean, next: string = "0") => {
   });
 }
 
-const openLiveById = ( id: string ) => {
+const openLiveById = ( id: string, username: string ) => {
   return new Promise((resolve, reject) => {
     ipcRenderer.once('open-live-reply', function (event, arg) { // 接收到Main进程返回的消息
       resolve(arg);
     })
-    ipcRenderer.send('open-live-query', id);
+    ipcRenderer.send('open-live-query', id, username);
   });
 }
 
@@ -66,14 +66,6 @@ const addAlertMessageListener = () => {
   });
 }
 
-const restartFfmpegServer= (liveId: string) => {
-  return new Promise((resolve, reject) => {
-    ipcRenderer.once('restart-live-process-reply', function (event, arg) { // 接收到Main进程返回的消息
-      resolve(arg);
-    });
-    ipcRenderer.send('restart-live-process-query', liveId);
-  });
-}
 
 export {
   testSend,
@@ -85,6 +77,5 @@ export {
   closeWin,
   getPort,
   getVersion,
-  addAlertMessageListener,
-  restartFfmpegServer
+  addAlertMessageListener
 }

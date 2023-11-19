@@ -12,21 +12,27 @@ onMounted(() => {
 });
 
 //画星空背景
-function drawStars(maxStars) {
-	var canvas = document.getElementById('canvas'),
-		ctx = canvas.getContext('2d'),
+function drawStars(maxStars: number) {
+	const canvas: any = document.getElementById('canvas') || null;
+	if(!canvas) {
+		return;
+	}
+	const stars: any[] = []; //保存所有星星
+	var ctx = canvas.getContext('2d'),
 		w = canvas.width = window.innerWidth,
 		h = canvas.height = window.innerHeight,
 
 		hue = 217, //色调色彩
-		stars = [], //保存所有星星
 		count = 0; //用于计算星星
 		// maxStars = 1300; //星星数量
   ctx.clearRect(0, 0, w, h);
 	//canvas2是用来创建星星的源图像，即母版，
 	//根据星星自身属性的大小来设置
-	var canvas2 = document.createElement('canvas'),
-		ctx2 = canvas2.getContext('2d');
+	const canvas2: any = document.createElement('canvas') || null;
+	if(!canvas2) {
+		return;
+	}
+	var ctx2 = canvas2.getContext('2d');
 	canvas2.width = 100;
 	canvas2.height = 100;
   ctx2.clearRect(0, 0, w, h);
@@ -49,7 +55,7 @@ function drawStars(maxStars) {
 	ctx2.fill();
 
 	// End cache
-	function random(min, max) {
+	function random(min: number, max: number) {
 		if (arguments.length < 2) {
 			max = min;
 			min = 0;
@@ -65,7 +71,7 @@ function drawStars(maxStars) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
 
-	function maxOrbit(x, y) {
+	function maxOrbit(x: number, y: number) {
 		var max = Math.max(x, y),
 			diameter = Math.round(Math.sqrt(max * max + max * max));
 		//星星移动范围，值越大范围越小，

@@ -36,13 +36,16 @@ export const useMemberLiveListStore = defineStore('memberLiveList', () => {
     await initMemberList();
   }
 
-  const initMemberList = async () => {
+  const initMemberList = debounce(async () => {
     liveList.value = [];
     replayList.value = [];
     next.value = "0";
     isQueryLive.value = true;
     await getMemberList();
-  }
+  }, 1000, {
+    leading: true,
+    trailing: false
+  });
 
   const initMessage = () => {
     setTimeout(() => {
@@ -77,8 +80,6 @@ export const useMemberLiveListStore = defineStore('memberLiveList', () => {
     if(scrollTop === 0) {
       e.target.childNodes[1].scrollTop = 1;
       showTopLoading.value = true;
-      liveList.value = [];
-      replayList.value = [];
       await initMemberList();
       showTopLoading.value = false;
       return;

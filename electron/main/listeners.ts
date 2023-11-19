@@ -33,10 +33,11 @@ export class Listeners {
       if(win && win.length > 0) {
         if(win[0].videoWin.isVisible()) {
           win[0].videoWin.focus();
+          this.win.webContents.send("live-init-success");
         }
         return;
       }
-      const video = new VideoWin(args[0]);
+      const video = new VideoWin(args[0], args[1]);
       this.videoWinList.push(video);
       this.win.videoWinList = this.videoWinList;
       // TODO: 待优化
@@ -115,31 +116,15 @@ export class Listeners {
       win.childProcessArray.splice(index, 1);
     });
 
-    ipcMain.on('restart-live-process-query', (event, ...args) => {
-      const liveId = args[0];
-      const wins = this.videoWinList.filter(item => {
-        return item.liveId === liveId;
-      });
-      wins.forEach(item => {
-        if(item !== wins[0]) {
-          item.videoWin.isDestroyed() && item.videoWin.destroy();
-          const index = this.videoWinList.indexOf(item);
-          this.videoWinList.splice(index, 1);
-        } else {
-          item.closeFfmpegServer();
-          item.runFfmpegServer(false);
-        }
-      });
-      this.win.videoWinList = this.videoWinList;
-      event.reply('restart-live-process-reply');
-    });
-
     ipcMain.on('main-ffmpeg-server-close', (event, ...args) => {
       const liveId = args[0];
       const wins = this.videoWinList.filter(item => {
         return item.liveId === liveId;
       });
       wins?.[0]?.videoWin.webContents.send('ffmpeg-server-close');
+    });
+    ipcMain.on('video-init-success', (event, ...args) => {
+      win.webContents.send("live-init-success");
     });
   }
 }

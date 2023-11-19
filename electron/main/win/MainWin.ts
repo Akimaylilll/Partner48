@@ -19,7 +19,7 @@ export class MainWin {
     const url = process.env.VITE_DEV_SERVER_URL
     const indexHtml = join(process.env.DIST, 'index.html')
     this.win = new BrowserWindow({
-      title: 'Main window',
+      title: 'Partner48',
       icon: join(process.env.PUBLIC, 'favicon.ico'),
       webPreferences: {
         preload,

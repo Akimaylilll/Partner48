@@ -18,7 +18,6 @@ ffmpeg.setFfprobePath(ffprobePath.path.replace(
 const command = ffmpeg(source)
 .inputOptions('-re')
 .on('start', function (commandLine) {
-  console.log('[' + new Date() + '] Vedio is Pushing !');
   console.log('commandLine: ' + commandLine);
   console.log("event: ffmpeg server start");
 })
@@ -27,6 +26,9 @@ const command = ffmpeg(source)
   console.log('stdout: ' + stdout);
   console.log('stderr: ' + stderr);
   console.log("event: ffmpeg server error");
+})
+.on('progress', function (progress) {
+  console.log('[' + new Date() + '] Vedio is Pushing !');
 })
 .on('end', function () {
   console.log('[' + new Date() + '] Vedio Pushing is Finished !');
@@ -41,5 +43,5 @@ const command = ffmpeg(source)
 ])
 .format('flv');
 command.output(`rtmp://${host}:${port}/live/${liveId}`, {
-end: true
+end: false, autoClose: false
 }).run();

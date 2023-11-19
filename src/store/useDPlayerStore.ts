@@ -36,7 +36,6 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
   let timeouter: null | number = null;
   let timer: null | number = null;
   let danmu: NimChatroomSocket | null  = null;
-  let repeat = 3;
   let isOpenLivePage = true;
 
   const initLive = () => {
@@ -47,6 +46,8 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
       console.log("open-video-id", videoId)
       liveType.value = type;
       danmuData.value = danmus;
+      dPlayer && dPlayer.destroy();
+      dPlayer = null;
       if(source.indexOf('.m3u8') > -1) {
         isLive.value = false;
       }
@@ -84,6 +85,18 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
     });
     dp.on('play' as DPlayerEvents, function() {
       isPause.value = false;
+      if(liveType.value != 1) {
+        const radioBackground = {
+          render() {
+            return h(RadioBackground, {});
+          }
+        }
+        const dom$ = document.querySelector('.dplayer-video-wrap');
+        if(dom$){
+          createApp(radioBackground).mount(dom$);
+        };
+        dp.play();
+      }
     });
     dp.on('waiting' as DPlayerEvents, function() {
       !timeouter && (timeouter = window.setInterval(() => {
@@ -95,7 +108,6 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
     });
     dp.on('playing' as DPlayerEvents, function() {
       now_time.value = dPlayer?.video.currentTime || 0;
-      repeat = 3;
       timeouter && clearInterval(timeouter);
       timeout.value = 0;
       timeouter = null;
@@ -247,23 +259,12 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
         });
         insertRotationButton();
       }, 2000);
-      if(liveType.value != 1) {
-        const radioBackground = {
-          render() {
-            return h(RadioBackground, {});
-          }
-        }
-        const dom$ = document.querySelector('.dplayer-danmaku');
-        if(dom$){
-          createApp(radioBackground).mount(dom$);
-        };
-      }
     }, 2000);
   }
 
   const danmuScroll = ()=> {
     isPointerEvents.value = true;
-    isScroll.value = true;``
+    isScroll.value = true;
     timer && clearTimeout(timer);
     timer = window.setTimeout(() => {
       isScroll.value = false;
