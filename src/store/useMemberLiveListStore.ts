@@ -65,11 +65,13 @@ export const useMemberLiveListStore = defineStore('memberLiveList', () => {
       lastLiveListLength = liveData.liveList.length;
     }
     isQueryLive.value = false;
-    if(lastLiveListLength < 20) {
-      const replayData: any = await getLiveList(false, next.value);
-      replayList.value = Array.from(new Set([...replayList.value,...replayData.liveList]));
-      next.value = replayData.next;
-    }
+    setTimeout(async() =>{
+      if(lastLiveListLength < 20) {
+        const replayData: any = await getLiveList(false, next.value);
+        replayList.value = Array.from(new Set([...replayList.value,...replayData.liveList]));
+        next.value = replayData.next;
+      }
+    }, 1000);
   }, 1000, {
     leading: true,
     trailing: false

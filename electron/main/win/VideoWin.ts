@@ -20,6 +20,7 @@ export class VideoWin {
   private danmuData: Array<any> = [];
   private roomId: string = "";
   private ffmpegServer: any = null;
+  private timer = null;
 
   public constructor(liveId: string, liveUser: string) {
     this.liveId = liveId;
@@ -59,6 +60,11 @@ export class VideoWin {
         hash: 'live'
       });
     }
+    ipcMain.on('video-restart',(event, liveId)=>{
+      if(this.liveId === liveId) {
+        this.runFfmpegServer();
+      }
+    });
     // 通知模态框渲染完成
     ipcMain.once('modal-accomplish',(event,msg)=>{
       // 发送给渲染进程
@@ -98,12 +104,15 @@ export class VideoWin {
   }
 
   public closeFfmpegServer() {
+    this.timer && clearInterval(this.timer);
+    this.timer = null;
     ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
     this.ffmpegServer && treeKill(this.ffmpegServer.pid);
     this.ffmpegServer = null;
   }
 
   public runFfmpegServer() {
+    this.closeFfmpegServer();
     const source = this.source;
     const liveId = this.liveId.toString();
     const host = "localhost";
@@ -113,14 +122,16 @@ export class VideoWin {
       [source, liveId, host, port], {
       silent: true
     });
-    let timer = null;
     let repeat = 3;
     const timerFunction = () => {
-      timer && clearInterval(timer);
-      timer = null;
-      timer = setInterval(() => {
+      this.timer && clearInterval(this.timer);
+      this.timer = null;
+      this.timer = setInterval(() => {
         if(repeat < 0) {
           !this.videoWin.isDestroyed() && this.videoWin.close();
+          this.timer && clearInterval(this.timer);
+          this.timer = null;
+          ipcMain.emit("main-message-alert", true, "直播已关闭");
           return;
         }
         repeat --;

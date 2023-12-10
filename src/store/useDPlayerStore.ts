@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref, computed, h, createApp } from 'vue';
 import Danmu from "../components/Danmu.vue";
-import RadioBackground from "../components/RadioBackground.vue";
 import { getIMKey, closeLiveWin } from '../renderer/index';
 import { ipcRenderer } from 'electron';
 import DPlayer, { DPlayerEvents } from 'dplayer';
@@ -46,13 +45,21 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
       console.log("open-video-id", videoId)
       liveType.value = type;
       danmuData.value = danmus;
-      dPlayer && dPlayer.destroy();
-      dPlayer = null;
+      if(dPlayer) {
+        ((dPlayer as any).flvPlayer as any).pause();
+        ((dPlayer as any).flvPlayer as any).unload();
+        ((dPlayer as any).flvPlayer as any).detachMediaElement();
+        ((dPlayer as any).flvPlayer as any).destroy();
+        (dPlayer as any).flvPlayer = null;
+        dPlayer.destroy();
+        dPlayer = null;
+      }
       if(source.indexOf('.m3u8') > -1) {
         isLive.value = false;
       }
       dPlayer = initVideoPlayer(source, videoId || '', isLive.value === undefined ? true : isLive.value, live_port, danmu_port);
       initDanmu(roomId);
+      insertRotationButton();
       isOpenLivePage = false;
       // ipcRenderer.on("ffmpeg-server-close", function() {
       //   closeLive(source, videoId);
@@ -85,17 +92,17 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
     });
     dp.on('play' as DPlayerEvents, function() {
       isPause.value = false;
-      if(liveType.value != 1) {
-        const radioBackground = {
-          render() {
-            return h(RadioBackground, {});
-          }
-        }
-        const dom$ = document.querySelector('.dplayer-video-wrap');
-        if(dom$){
-          createApp(radioBackground).mount(dom$);
-        };
-        dp.play();
+      if(liveType.value != 1 && liveType.value != 5) {
+        // const radioBackground = {
+        //   render() {
+        //     return h(RadioBackground, {});
+        //   }
+        // }
+        // const dom$ = document.querySelector('.dplayer-video-wrap');
+        // if(dom$){
+        //   createApp(radioBackground).mount(dom$);
+        // };
+        // dp.play();
       }
     });
     dp.on('waiting' as DPlayerEvents, function() {
@@ -124,6 +131,10 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
   }
 
   function handleNewMessage(t: NimChatroomSocket, event: Array<any>): void {
+    const danmu$ = document.querySelector('.danmu');
+    if(!danmu$) {
+      renderDanmu();
+    }
     for (const item of event) {
       if(item.type === "text") {
         const custom = JSON.parse(item.custom);
@@ -165,9 +176,6 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
         clearInterval(interval);
         interval = null;
       }
-    });
-    dp.on('ended'as DPlayerEvents, function() {
-      alert('ended');
     });
     dp.on('play' as DPlayerEvents , function() {
       if(!interval) {
@@ -211,7 +219,7 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
   }
 
   function flvPlayerInit (src: string, video: any) {
-    const flvPlayer = flvjs.createPlayer({
+    let flvPlayer = flvjs.createPlayer({
       type: 'flv',
       url: src
     }, {
@@ -249,16 +257,13 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
         createApp(danmu).mount(dom$);
       };
       //dplayer-controller
-      setTimeout(() => {
-        const childNodes: any = document.getElementById('myVideo')?.childNodes || {};
-        Object.keys(childNodes).map(index => {
-          const item = childNodes[index];
-          if(item.className === "dplayer-controller") {
-            danmuBottom.value = item.clientHeight;
-          }
-        });
-        insertRotationButton();
-      }, 2000);
+      const childNodes: any = document.getElementById('myVideo')?.childNodes || {};
+      Object.keys(childNodes).map(index => {
+        const item = childNodes[index];
+        if(item.className === "dplayer-controller") {
+          danmuBottom.value = item.clientHeight;
+        }
+      });
     }, 2000);
   }
 
@@ -282,6 +287,7 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
     child.style.setProperty("line-height", "25px");
     child.style.setProperty("padding", "0");
     child.onclick = () => {
+      ipcRenderer.send('video-restart', videoId.value);
       radian.value = radian.value ? radian.value + 90 : 90;
       if(radian.value > 360) {
         radian.value = 0;
@@ -295,7 +301,7 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
   const clcStyle = computed(() => {
     const style: any = {};
     style["width"] = "100% !important";
-    style["--video-display"] = liveType.value === 1 ? "block" : "none";
+    style["--video-display"] = liveType.value === 1 || liveType.value === 5 ? "block" : "none";
     style["--danmu-pointer-events"] = isPointerEvents.value ? 'auto' : 'none';
     style["--danmu-bottom"] = `${(danmuBottom.value || 0) + 3}px`;
     style["--danmu-transform"] = `${radian.value}deg`;
@@ -309,13 +315,15 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
     }
     getIMKey().then(value => {
       if(roomId && value  && !danmu) {
-          danmu = new NimChatroomSocket({
-            roomId: roomId,
-            onMessage: handleNewMessage
-          });
-          danmu.init(value as string);
-          renderDanmu();
+        if(danmu) {
+          return;
         }
+        danmu = new NimChatroomSocket({
+          roomId: roomId,
+          onMessage: handleNewMessage
+        });
+        danmu.init(value as string);
+      }
     });
   }
 

@@ -49,7 +49,7 @@ ipcRenderer.on('live-init-success', function (event, args){
   <div v-masonry-tile gutter="10" itemSelector=".grid-item" :fitWidth= "true" class="grid-item" v-for="(o ,index) in liveList" :key="index">
     <el-card @click="!isOpenLivePage&&openLive(o.liveId, o.userInfo.nickname)">
       <img :src="`https://source.48.cn${o.coverPath}`" class="cover">
-      <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 1 ? '视频' : '电台'}}</span>
+      <span class="liveType" :style="`background-color: ${o.liveType === 1 ? 'orchid' : 'goldenrod'};`">{{o.liveType === 5 ? '游戏' : o.liveType === 1 ? '视频' : '电台'}}</span>
       <div style="padding: 14px;">
         <span>{{o.title}}</span>
         <div class="bottom clearfix">
