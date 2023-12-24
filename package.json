@@ -1,6 +1,6 @@
 {
   "name": "Partner48",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "dist-electron/main/index.js",
   "description": "Really simple Electron + Vue + Vite boilerplate.",
   "author": "maylilll <642722474@qq.com>",
