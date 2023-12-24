@@ -8,10 +8,6 @@ import { DANMAKU_ID, DANMAKU_API, LIVE_HOST } from '../config/index';
 import NimChatroomSocket from '../utils/NimChatroomSocket';
 import flvjs from 'flv.js';
 import Hls from 'hls.js';
-interface LivePalyer extends DPlayer{
-  restartFlvPlayer?: Function | null,
-  flvPlayer?: flvjs.Player | null
-}
 
 // defineStore 接受两个参数
 //  参数1：仓库的id（字符串）
@@ -37,6 +33,8 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
   let danmu: NimChatroomSocket | null  = null;
   let isOpenLivePage = true;
 
+  let flvPlayer: flvjs.Player | null = null;
+
   const initLive = () => {
     ipcRenderer.on('video-id', function (event, id: string){
       videoId.value = id;
@@ -46,11 +44,8 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
       liveType.value = type;
       danmuData.value = danmus;
       if(dPlayer) {
-        ((dPlayer as any).flvPlayer as any).pause();
-        ((dPlayer as any).flvPlayer as any).unload();
-        ((dPlayer as any).flvPlayer as any).detachMediaElement();
-        ((dPlayer as any).flvPlayer as any).destroy();
-        (dPlayer as any).flvPlayer = null;
+        flvPlayer?.destroy();
+        flvPlayer = null;
         dPlayer.destroy();
         dPlayer = null;
       }
@@ -148,8 +143,7 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
 
   function livePlayer (src: string, danmu_port: number) {
     let interval: number | null = null;
-    let flvPlayer: flvjs.Player | null = null;
-    const dp: LivePalyer = new DPlayer({
+    const dp: DPlayer = new DPlayer({
       live: true,
       preload: 'auto',
       container: document.getElementById('myVideo'),
@@ -190,10 +184,9 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
         }, 2000); //2000毫秒执行一次
       }
     });
-    dp.flvPlayer = flvPlayer;
     return dp;
   }
-  
+
   function recordPlayer (src: string, danmu_port: number) {
     const dp: DPlayer = new DPlayer({
       live: false,

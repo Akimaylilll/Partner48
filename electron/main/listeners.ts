@@ -41,14 +41,14 @@ export class Listeners {
       this.videoWinList.push(video);
       this.win.videoWinList = this.videoWinList;
       // TODO: 待优化
-      setTimeout(() => {
-        if(!video.videoWin || video.videoWin.isDestroyed()){
-          return;
-        }
-        if(!video.videoWin.isVisible()) {
-          video.videoWin.close();
-        }
-      }, 10000);
+      // setTimeout(() => {
+      //   if(!video.videoWin || video.videoWin.isDestroyed()){
+      //     return;
+      //   }
+      //   if(!video.videoWin.isVisible()) {
+      //     video.videoWin.close();
+      //   }
+      // }, 10000);
       event.reply('open-live-reply', video.source);
     });
     ipcMain.on('close-live-win', (event, ...args) => {

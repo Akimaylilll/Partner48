@@ -9,6 +9,7 @@ import treeKill from 'tree-kill';
 import log  from 'electron-log';
 import { Tools } from '../utils';
 import Store from 'electron-store';
+import { reject } from 'lodash';
 export class VideoWin {
   public source: string = null;
   public liveId: string = null;
@@ -21,6 +22,8 @@ export class VideoWin {
   private roomId: string = "";
   private ffmpegServer: any = null;
   private timer = null;
+  private isClosed = false;
+  private pids: Array<number> = [];
 
   public constructor(liveId: string, liveUser: string) {
     this.liveId = liveId;
@@ -60,9 +63,9 @@ export class VideoWin {
         hash: 'live'
       });
     }
-    ipcMain.on('video-restart',(event, liveId)=>{
+    ipcMain.on('video-restart', async (event, liveId)=>{
       if(this.liveId === liveId) {
-        this.runFfmpegServer();
+        await this.restartFfmpegServer();
       }
     });
     // 通知模态框渲染完成
@@ -104,15 +107,50 @@ export class VideoWin {
   }
 
   public closeFfmpegServer() {
-    this.timer && clearInterval(this.timer);
-    this.timer = null;
-    ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
-    this.ffmpegServer && treeKill(this.ffmpegServer.pid);
-    this.ffmpegServer = null;
+    this.isClosed = true;
+    // setTimeout(() => {
+      this.timer && clearInterval(this.timer);
+      this.timer = null;
+      ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
+      this.killAllPids().then(() => {
+        log.log("kill all pids");
+      })
+    // }, 5000);
+  }
+
+  public killAllPids(isRestart: boolean = false) {
+    return Promise.all(this.pids.map((pid) => {
+      return new Promise((resolve, reject) => {
+        this.isClosed = true;
+        treeKill(pid, 'SIGKILL', (err) => {
+          if(err) {
+            log.error(err);
+            reject;
+          } else {
+            this.pids.splice(this.pids.indexOf(pid), 1);
+            console.log("kill", pid);
+            this.ffmpegServer = null;
+            isRestart && (this.isClosed = false);
+            isRestart && this.runFfmpegServer();
+            resolve;
+          }
+        });
+      });
+    }));
+  }
+
+  public async restartFfmpegServer() {
+    // setTimeout(() => {
+      this.timer && clearInterval(this.timer);
+      this.timer = null;
+      ipcMain.emit("main-delete-childProcess", true, this.ffmpegServer);
+      // await Tools.killProcess(this.ffmpegServer?.pid);
+      await this.killAllPids(true);
+      
+    // }, 5000);
   }
 
   public runFfmpegServer() {
-    this.closeFfmpegServer();
     const source = this.source;
     const liveId = this.liveId.toString();
     const host = "localhost";
@@ -122,11 +160,19 @@ export class VideoWin {
       [source, liveId, host, port], {
       silent: true
     });
+    this.pids.push(this.ffmpegServer?.pid);
+    console.log("first",this.ffmpegServer?.pid)
     let repeat = 3;
     const timerFunction = () => {
       this.timer && clearInterval(this.timer);
       this.timer = null;
       this.timer = setInterval(() => {
+        if(this.isClosed) {
+          // !this.videoWin?.isDestroyed() && this.videoWin.close();
+          this.timer && clearInterval(this.timer);
+          this.timer = null;
+          return;
+        }
         if(repeat < 0) {
           !this.videoWin.isDestroyed() && this.videoWin.close();
           this.timer && clearInterval(this.timer);
@@ -140,12 +186,14 @@ export class VideoWin {
           [source, liveId, host, port], {
           silent: true
         });
+        this.pids.push(this.ffmpegServer?.pid);
+        console.log("for",this.ffmpegServer?.pid)
         this.ffmpegServer.stdout.on('data', (result) => {
           const res = Buffer.from(result).toString();
           // log.info(res);
           if(res.indexOf("Vedio is Pushing") > -1) {
             repeat = 3;
-            timerFunction();
+            // timerFunction();
           }
         });
         this.ffmpegServer.stderr.on('data', (result) => {
@@ -153,7 +201,7 @@ export class VideoWin {
         });
         this.ffmpegServer.liveId = liveId;
         this.ffmpegServer.videoWin = this.videoWin;
-        !this.videoWin.isDestroyed() && this.videoWin.webContents.send('open-video-id', this.liveId,
+        !this.videoWin?.isDestroyed() && this.videoWin?.webContents.send('open-video-id', this.liveId,
         this.liveUser, this.source, this.liveType,
         this.danmuData, this.roomId, danmu_port, live_port);
         ipcMain.emit("main-add-childProcess", true, this.ffmpegServer);
@@ -172,7 +220,7 @@ export class VideoWin {
     const store = new Store();
     const live_port = store.get("LIVE_PORT");
     const danmu_port = store.get("DANMAKU_PORT");
-    this.videoWin.webContents.send('open-video-id', this.liveId,
+    this.videoWin?.webContents.send('open-video-id', this.liveId,
       this.liveUser, this.source, this.liveType,
       this.danmuData, this.roomId, danmu_port, live_port);
     this.ffmpegServer.liveId = liveId;
