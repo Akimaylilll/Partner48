@@ -19,8 +19,8 @@
 
 ## 下载
 - [MACOS版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.1/Partner48_1.0.1.dmg)
-- [windows版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.1/Partner48_1.0.1_x64.exe)
-- [windows免安装版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.1/Partner48_1.0.1_x64-win-unpacked.zip)
+- [windows版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2_x64.exe)
+- [windows免安装版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2_x64-win-unpacked.zip)
 ## 注意事项
 - 直播弹幕需要设置网易云信令牌，48tools项目中大佬提供了一个[云信令牌](https://github.com/duan602728596/48tools/blob/main/packages/48tools/src/pages/PlayerWindow/sdk/appKey.mjs)
 - 项目以交流学习为主要目的
