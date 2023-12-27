@@ -18,7 +18,7 @@
 
 
 ## 下载
-- [MACOS版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.1/Partner48_1.0.1.dmg)
+- [MACOS版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2.dmg)
 - [windows版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2_x64.exe)
 - [windows免安装版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2_x64-win-unpacked.zip)
 ## 注意事项
