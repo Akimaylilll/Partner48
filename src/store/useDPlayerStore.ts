@@ -134,7 +134,7 @@ export const useDPlayerStore = defineStore('dPlayer', () => {
       if(item.type === "text") {
         const custom = JSON.parse(item.custom);
         if(!danmuData) {
-          danmuData.value = [];
+          danmuData.value = [] as any;
         }
         danmuData.value.push([0, 0, 16777215, custom.user?.nickName || "", item.text] as never)
       }
