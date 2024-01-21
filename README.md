@@ -16,14 +16,17 @@
 
 如果您喜欢该项目，欢迎点赞以表示支持，欢迎任何建议或反馈，感谢您的关注和支持！
 
-## QQ技术交流群
-群号：185044625
-![Alt Text](doc/qq_group.jpg)
-
 ## 下载
 - [MACOS版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2.dmg)
 - [windows版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2_x64.exe)
 - [windows免安装版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2_x64-win-unpacked.zip)
+
+## QQ技术交流群
+群号：185044625
+入群密码：Partner48
+<p align="left">
+<img src="https://github.com/Akimaylilll/Partner48/blob/master/doc/qq_group.jpg" width="250">
+
 ## 注意事项
 - 直播弹幕需要设置网易云信令牌，48tools项目中大佬提供了一个[云信令牌](https://github.com/duan602728596/48tools/blob/main/packages/48tools/src/pages/PlayerWindow/sdk/appKey.mjs)
 - 项目以交流学习为主要目的
