@@ -16,6 +16,9 @@
 
 如果您喜欢该项目，欢迎点赞以表示支持，欢迎任何建议或反馈，感谢您的关注和支持！
 
+## QQ技术交流群
+群号：185044625
+![Alt Text](doc/qq_group.jpg)
 
 ## 下载
 - [MACOS版](https://github.com/Akimaylilll/Partner48/releases/download/v1.0.2/Partner48_1.0.2.dmg)
